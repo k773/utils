@@ -9,7 +9,7 @@ import (
 	"io"
 )
 
-func encryptBtB(strkey string, text []byte) []byte {
+func EncryptBtB(strkey string, text []byte) []byte {
 	key, _ := hex.DecodeString(strkey)
 	plaintext := text
 
@@ -30,7 +30,7 @@ func encryptBtB(strkey string, text []byte) []byte {
 	return ciphertext
 }
 
-func decryptBtB(strkey string, bytes []byte) []byte {
+func DecryptBtB(strkey string, bytes []byte) []byte {
 	// Load your secret key from a safe place and reuse it across multiple
 	// NewCipher calls. (Obviously don't use this example key for anything
 	// real.) If you want to convert a passphrase to a key, use a suitable
@@ -54,16 +54,16 @@ func decryptBtB(strkey string, bytes []byte) []byte {
 	return ciphertext
 }
 
-func encryptStH(strkey string, str string) string {
+func EncryptStH(strkey string, str string) string {
 	return hex.EncodeToString(encryptBtB(strkey, []byte(str)))
 }
 
-func decryptHtS(strkey string, hexStr string) string {
+func DecryptHtS(strkey string, hexStr string) string {
 	ciphertext, _ := hex.DecodeString(hexStr)
 	return string(decryptBtB(strkey, ciphertext))
 }
 
-func sha256StH(text string) string {
+func Sha256StH(text string) string {
 	h := sha256.New()
 	h.Write([]byte(text))
 	return hex.EncodeToString(h.Sum(nil))
