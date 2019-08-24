@@ -55,12 +55,12 @@ func DecryptBtB(strkey string, bytes []byte) []byte {
 }
 
 func EncryptStH(strkey string, str string) string {
-	return hex.EncodeToString(encryptBtB(strkey, []byte(str)))
+	return hex.EncodeToString(EncryptBtB(strkey, []byte(str)))
 }
 
 func DecryptHtS(strkey string, hexStr string) string {
 	ciphertext, _ := hex.DecodeString(hexStr)
-	return string(decryptBtB(strkey, ciphertext))
+	return string(DecryptBtB(strkey, ciphertext))
 }
 
 func Sha256StH(text string) string {
