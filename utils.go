@@ -143,7 +143,7 @@ func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
 
 	_, response, e := ses.Get(url).End()
 	if e != nil {
-		return "R E"
+		panic(e)
 	}
 	return response
 }
