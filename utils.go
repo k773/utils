@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/koteezy/ruCaptcha"
@@ -21,6 +22,12 @@ type scUtils struct {
 }
 
 type registerJson struct {
+	Login           string `json:"login"`
+	Password        string `json:"password"`
+	PasswordConfirm string `json:"password_confirmation"`
+	Email           string `json:"email"`
+	Captcha         string `json:"captcha"`
+	Token           string `json:"_token"`
 }
 
 func EncryptBtB(strkey string, text []byte) []byte {
@@ -113,34 +120,45 @@ func findGroups(text string, reg string) []string {
 	return temp4
 }
 
-func (scUtils) registerAccount(ses *gorequest.SuperAgent, rucaptchaKey string) (string, string, string) {
-	// BAN
+func (scUtils) registerAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
+	// Returns login string, password string, csrf string
 	siteKey := "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
 	pageUrl := "https://streamcraft.net/register"
 	regexToken := `<meta name="csrf-token" content="(?P<token>.*)">`
 register:
+	_, page, _ := ses.Get(pageUrl).End()
+
+	csrf := findGroup(page, regexToken)[1]
 	email := randomdata.Email()
 	name := randomdata.FirstName(randomdata.Number(1, 2))
 	length := 8
 	if len(name) < 8 {
 		length = len(name)
 	}
-	login := name[0:length] + randomdata.RandStringRunes(4) + strconv.Itoa(randomdata.Number(1980, 2017))
+	login := name[:length] + randomdata.RandStringRunes(4) + strconv.Itoa(randomdata.Number(1980, 2017))
 	password := login + login
-	re := rucaptcha.New(rucaptchaKey)
+
+	//RuCaptcha
+	re := rucaptcha.New(ruCaptchaKey)
 	captcha, err := re.ReCaptcha(pageUrl, siteKey)
 	if err != nil {
 		goto register
 		//panic(err)
 	}
-	//fmt.Printf(captcha)
-	_, page, _ := ses.Get(pageUrl).End()
-	csrf := findGroup(page, regexToken)[1]
-	Json := fmt.Sprintf(`{"login": "%s", "email": "%s", "password": "%s", "password_confirmation": "%s", "captcha": "%s", "_token": "%s"}`, login, email, password, password, captcha, csrf)
-	_, data, _ := ses.Post(pageUrl).Send(Json).End()
+
+	var Json = registerJson{}
+	Json.Login = login
+	Json.Password = password
+	Json.PasswordConfirm = password
+	Json.Email = email
+	Json.Captcha = captcha
+	Json.Token = csrf
+	Jsonb, _ := json.Marshal(Json)
+
+	_, data, _ := ses.Post(pageUrl).Send(string(Jsonb)).End()
 	if data != `{"success":true,"redirect":"https:\/\/streamcraft.net\/home"}` {
 		fmt.Println("Error while solving captcha! Trying again...", data)
 		goto register
 	}
-	return login, password
+	return login, password, csrf
 }
