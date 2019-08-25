@@ -128,6 +128,26 @@ func findGroups(text string, reg string) []string {
 	return temp4
 }
 
+func getRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
+	if len(args)%2 != 0 {
+		return ""
+	}
+
+	for i, arg := range args {
+		if i%2 == 0 {
+			url += arg + "="
+		} else {
+			url += arg + "&"
+		}
+	}
+
+	_, response, e := ses.Get(url).End()
+	if e != nil {
+		return "R E"
+	}
+	return response
+}
+
 func (scUtils) registerAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
 	const siteKey = "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
