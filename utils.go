@@ -18,6 +18,8 @@ import (
 	"strconv"
 )
 
+const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+
 type scUtils struct {
 }
 
@@ -28,6 +30,12 @@ type registerJson struct {
 	Email           string `json:"email"`
 	Captcha         string `json:"captcha"`
 	Token           string `json:"_token"`
+}
+
+type reputationJson struct {
+	User       int    `json:"user"`
+	Reputation int    `json:"reputation"`
+	Token      string `json:"_token"`
 }
 
 func EncryptBtB(strkey string, text []byte) []byte {
@@ -122,9 +130,9 @@ func findGroups(text string, reg string) []string {
 
 func (scUtils) registerAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
-	siteKey := "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
-	pageUrl := "https://streamcraft.net/register"
-	regexToken := `<meta name="csrf-token" content="(?P<token>.*)">`
+	const siteKey = "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
+	const pageUrl = "https://streamcraft.net/register"
+	const regexToken = `<meta name="csrf-token" content="(?P<token>.*)">`
 register:
 	_, page, _ := ses.Get(pageUrl).End()
 
@@ -161,4 +169,47 @@ register:
 		goto register
 	}
 	return login, password, csrf
+}
+
+func (scUtils) setReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
+	//Set user reputation
+	const pageUrl = "https://streamcraft.net/forum/user/reputation"
+
+	var Json reputationJson
+	Json.User = userId
+	Json.Reputation = count
+	Json.Token = csrf
+	JsonB, _ := json.Marshal(Json)
+
+	ses.Post(pageUrl).Send(string(JsonB)).End()
+}
+
+func (scUtils) getUserId(ses *gorequest.SuperAgent, nickname string) int {
+	//Get user id
+	const pageUrl = "https://streamcraft.net/user/"
+	const regexUserId = `<i class="fa fa-thumbs-down cursor-pointer" onclick="App\.sendRequest\('/forum/user/reputation', {user: (?P<id>.*), reputation: -1}\);"></i>`
+
+	_, page, _ := ses.Get(pageUrl + nickname).End()
+	id, _ := strconv.Atoi(findGroup(page, regexUserId)[1])
+	return id
+}
+
+func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
+	const regexThreads = `<a href="/forum/category/(?P<id>.*)"><i class="fa fa-level-down">`
+	const regexThreadsIds = `<a class="btn btn-primary btn-shadow float-right" href="/forum/discussion/create/(?P<id>.*)" role="button">`
+	const ForumUrl = "https://streamcraft.net/forum/"
+	const CategoryUrl = "https://streamcraft.net/forum/category/"
+
+	_, text, _ := ses.Get(ForumUrl).End()
+	temp := findGroups(text, regexThreads)
+	var threadsIds []string
+	for _, thread := range temp {
+		_, temp2, _ := ses.Get(CategoryUrl + string(thread)).End()
+		temp3 := findGroup(temp2, regexThreadsIds)
+		if len(temp3) < 2 {
+			continue
+		}
+		threadsIds = append(threadsIds, temp3[1])
+	}
+	return threadsIds
 }
