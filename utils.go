@@ -113,12 +113,12 @@ func readFile(path string) string {
 	return string(text)
 }
 
-func findGroup(text string, reg string) []string {
+func FindGroup(text string, reg string) []string {
 	regex, _ := regexp.Compile(reg)
 	return regex.FindStringSubmatch(text)
 }
 
-func findGroups(text string, reg string) []string {
+func FindGroups(text string, reg string) []string {
 	regex, _ := regexp.Compile(reg)
 	temp := regex.FindAllStringSubmatch(text, -1)
 	var temp4 []string
@@ -128,7 +128,7 @@ func findGroups(text string, reg string) []string {
 	return temp4
 }
 
-func getRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
+func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
 	if len(args)%2 != 0 {
 		return ""
 	}
@@ -148,7 +148,7 @@ func getRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
 	return response
 }
 
-func (scUtils) registerAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
+func (scUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
 	const siteKey = "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
 	const pageUrl = "https://streamcraft.net/register"
@@ -156,7 +156,7 @@ func (scUtils) registerAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (
 register:
 	_, page, _ := ses.Get(pageUrl).End()
 
-	csrf := findGroup(page, regexToken)[1]
+	csrf := FindGroup(page, regexToken)[1]
 	email := randomdata.Email()
 	name := randomdata.FirstName(randomdata.Number(1, 2))
 	length := 8
@@ -191,7 +191,7 @@ register:
 	return login, password, csrf
 }
 
-func (scUtils) setReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
+func (scUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
 	//Set user reputation
 	const pageUrl = "https://streamcraft.net/forum/user/reputation"
 
@@ -204,13 +204,13 @@ func (scUtils) setReputation(ses *gorequest.SuperAgent, csrf string, userId int,
 	ses.Post(pageUrl).Send(string(JsonB)).End()
 }
 
-func (scUtils) getUserId(ses *gorequest.SuperAgent, nickname string) int {
+func (scUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
 	//Get user id
 	const pageUrl = "https://streamcraft.net/user/"
 	const regexUserId = `<i class="fa fa-thumbs-down cursor-pointer" onclick="App\.sendRequest\('/forum/user/reputation', {user: (?P<id>.*), reputation: -1}\);"></i>`
 
 	_, page, _ := ses.Get(pageUrl + nickname).End()
-	id, _ := strconv.Atoi(findGroup(page, regexUserId)[1])
+	id, _ := strconv.Atoi(FindGroup(page, regexUserId)[1])
 	return id
 }
 
@@ -221,11 +221,11 @@ func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	const CategoryUrl = "https://streamcraft.net/forum/category/"
 
 	_, text, _ := ses.Get(ForumUrl).End()
-	temp := findGroups(text, regexThreads)
+	temp := FindGroups(text, regexThreads)
 	var threadsIds []string
 	for _, thread := range temp {
 		_, temp2, _ := ses.Get(CategoryUrl + string(thread)).End()
-		temp3 := findGroup(temp2, regexThreadsIds)
+		temp3 := FindGroup(temp2, regexThreadsIds)
 		if len(temp3) < 2 {
 			continue
 		}
