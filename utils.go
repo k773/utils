@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
+	"github.com/SpencerSharkey/gomc/query"
 	"github.com/koteezy/ruCaptcha"
 	"github.com/parnurzeal/gorequest"
 	"io"
@@ -126,6 +127,21 @@ func FindGroups(text string, reg string) []string {
 		temp4 = append(temp4, temp2[1])
 	}
 	return temp4
+}
+
+func GetServerPlayers(ip string) []string {
+	req := query.NewRequest()
+	err := req.Connect(ip)
+	if err != nil {
+		panic(err)
+	}
+	response, _ := req.Full()
+
+	var playersArray []string
+	for _, player := range response.Players {
+		playersArray = append(playersArray, player)
+	}
+	return playersArray
 }
 
 func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
