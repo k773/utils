@@ -148,7 +148,7 @@ func FindAllGroups(text string, reg string) [][]string {
 
 func GetServerPlayers(ip string) []string {
 	req := query.NewRequest()
-	_ := req.Connect(ip)
+	_ = req.Connect(ip)
 	response, err := req.Full()
 
 	if response == nil {
