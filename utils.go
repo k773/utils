@@ -129,13 +129,36 @@ func FindGroups(text string, reg string) []string {
 	return temp4
 }
 
+func FindAllGroups(text string, reg string) [][]string {
+	regex, _ := regexp.Compile(reg)
+	temp := regex.FindAllStringSubmatch(text, -1)
+	var temp4 [][]string
+	for _, temp2 := range temp {
+		var temp6 []string
+		for _, temp5 := range temp2 {
+			if temp5 == temp2[0] {
+				continue
+			}
+			temp6 = append(temp6, temp5)
+		}
+		temp4 = append(temp4, temp6)
+	}
+	return temp4
+}
+
 func GetServerPlayers(ip string) []string {
 	req := query.NewRequest()
 	err := req.Connect(ip)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
+		return []string{}
 	}
-	response, _ := req.Full()
+	response, err := req.Full()
+
+	if response == nil {
+		fmt.Println("Error", ip)
+		return []string{}
+	}
 
 	var playersArray []string
 	for _, player := range response.Players {
