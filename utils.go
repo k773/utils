@@ -12,6 +12,7 @@ import (
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/koteezy/ruCaptcha"
 	"github.com/parnurzeal/gorequest"
+	"github.com/syndtr/goleveldb/leveldb"
 	"io"
 	"io/ioutil"
 	"os"
@@ -162,6 +163,31 @@ func GetServerPlayers(ip string) []string {
 		playersArray = append(playersArray, player)
 	}
 	return playersArray
+}
+
+func DbGet(db *leveldb.DB, key string) []byte {
+	val, err := db.Get([]byte(key), nil)
+	if err != nil {
+		if err.Error() == "leveldb: not found" {
+			return []byte{}
+		}
+		panic(err)
+	}
+	return val
+}
+
+func DbSet(db *leveldb.DB, key string, value interface{}) {
+	_ = db.Delete([]byte(key), nil)
+	_ = db.Put([]byte(key), value.([]byte), nil)
+}
+
+func Contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
