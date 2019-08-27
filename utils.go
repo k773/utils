@@ -157,8 +157,8 @@ func GetServerPlayers(ip string) []string {
 	}
 
 	var playersArray []string
-	for i, player := range response.Players {
-		fmt.Println(i)
+	for _, player := range response.Players {
+		//fmt.Println(i)
 		playersArray = append(playersArray, player)
 	}
 	return playersArray
