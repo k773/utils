@@ -153,7 +153,7 @@ func GetServerPlayers(ip string) []string {
 	response, _ := req.Full()
 
 	if response == nil {
-		//fmt.Println("Error", ip, err)
+		///fmt.Println("Error", ip, err)
 		return []string{}
 	}
 
