@@ -150,10 +150,10 @@ func FindAllGroups(text string, reg string) [][]string {
 func GetServerPlayers(ip string) []string {
 	req := query.NewRequest()
 	_ = req.Connect(ip)
-	response, err := req.Full()
+	response, _ := req.Full()
 
 	if response == nil {
-		fmt.Println("Error", ip, err)
+		//fmt.Println("Error", ip, err)
 		return []string{}
 	}
 
