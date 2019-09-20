@@ -305,8 +305,6 @@ func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 
 func (k773Utils) h2s(hex string) string {
 	src := []byte(hex)
-	// We can use the source slice itself as the destination
-	// because the decode loop increments by one and then the 'seen' byte is not used anymore.
 	n, _ := decode(src, src)
 	return string(src[:n])
 }
