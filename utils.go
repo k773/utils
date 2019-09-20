@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -23,6 +24,9 @@ import (
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 
 type scUtils struct {
+}
+
+type k773Utils struct {
 }
 
 type registerJson struct {
@@ -207,6 +211,12 @@ func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
 	return response
 }
 
+func getMD5Hash(text string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(text))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
 func (scUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
 	const siteKey = "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
@@ -291,4 +301,71 @@ func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 		threadsIds = append(threadsIds, temp3[1])
 	}
 	return threadsIds
+}
+
+func (k773Utils) h2s(hex string) string {
+	src := []byte(hex)
+	// We can use the source slice itself as the destination
+	// because the decode loop increments by one and then the 'seen' byte is not used anymore.
+	n, _ := decode(src, src)
+	return string(src[:n])
+}
+
+func (k773Utils) s2h(text string) string {
+	src := []byte(text)
+	dst := make([]byte, encodedLen(len(src)))
+	encode(dst, src)
+	return string(dst)
+}
+
+func encodedLen(n int) int { return n * 2 }
+
+func encode(dst, src []byte) int {
+	for i, v := range src {
+		v += 4
+		dst[i*2] = "0123456789abcdef"[v>>4]
+		dst[i*2+1] = "0123456789abcdef"[v&0x0f]
+	}
+
+	return len(src) * 2
+}
+
+func decode(dst, src []byte) (int, error) {
+	var i int
+	for i = 0; i < len(src)/2; i++ {
+		a, ok := fromHexChar(src[i*2])
+
+		if !ok {
+		}
+		b, ok := fromHexChar(src[i*2+1])
+
+		if !ok {
+		}
+		dst[i] = ((a << 4) | b) - 4
+	}
+	if len(src)%2 == 1 {
+		// Check for invalid char before reporting bad length,
+		// since the invalid char (if present) is an earlier problem.
+		if _, ok := fromHexChar(src[i*2]); !ok {
+		}
+	}
+	return i, nil
+}
+
+func fromHexChar(c byte) (byte, bool) {
+	switch {
+	case '0' <= c && c <= '9':
+		return c - '0', true
+	case 'a' <= c && c <= 'f':
+		return c - 'a' + 10, true
+	case 'A' <= c && c <= 'F':
+		return c - 'A' + 10, true
+	}
+
+	return 0, false
+}
+
+func decryptAes128Ecb(data, key string) string {
+	_, response, _ := gorequest.New().Post("http://212.237.2.10/gethashes.php?what=decrypt").Send(fmt.Sprintf("key=%s&data=%s", key, data)).End()
+	return response
 }
