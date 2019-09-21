@@ -303,13 +303,13 @@ func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	return threadsIds
 }
 
-func (k773Utils) h2s(hex string) string {
+func (k773Utils) H2s(hex string) string {
 	src := []byte(hex)
 	n, _ := decode(src, src)
 	return string(src[:n])
 }
 
-func (k773Utils) s2h(text string) string {
+func (k773Utils) S2h(text string) string {
 	src := []byte(text)
 	dst := make([]byte, encodedLen(len(src)))
 	encode(dst, src)
