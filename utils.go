@@ -26,9 +26,9 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"syscall"
+	//"syscall"
 	"time"
-	"unsafe"
+	//"unsafe"
 )
 
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
@@ -660,9 +660,10 @@ func fromHexChar(c byte) (byte, bool) {
 	return 0, false
 }
 
-func U(something string) uintptr {
-	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(something)))
-}
+//
+//func U(something string) uintptr {
+//	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(something)))
+//}
 
 //func (dialog *Dialog) CallDll() {
 //	if dialog.DllFilePath != "" && dialog.DllObject == nil {
