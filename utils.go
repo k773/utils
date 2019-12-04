@@ -1,41 +1,73 @@
 package utils
 
 import (
+	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
+	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
-	"github.com/koteezy/ruCaptcha"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
+	"golang.org/x/sys/windows/registry"
+	"golang.org/x/text/encoding/charmap"
 	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
+	"syscall"
+	"time"
+	"unsafe"
 )
 
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+const serverAddr = "http://127.0.0.1:8973"
 
-type scUtils struct {
+type ScUtils struct {
 }
 
-type k773Utils struct {
+type K773Utils struct {
+}
+
+type Dialog struct {
+	DllFilePath string
+	DllObject   *syscall.LazyDLL
+}
+
+type ServerStruct struct {
+	ServerName  string
+	LargeText   string
+	LargeTextId string
+}
+
+type requestStruct struct {
+	What string `json:"what"`
+	Key  string `json:"key"`
+	Data string `json:"data"`
 }
 
 type registerJson struct {
-	Login           string `json:"login"`
-	Password        string `json:"password"`
-	PasswordConfirm string `json:"password_confirmation"`
-	Email           string `json:"email"`
-	Captcha         string `json:"captcha"`
-	Token           string `json:"_token"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
+	Captcha  string `json:"captcha"`
+	Email    string `json:"email"`
+}
+
+type registerResponseJsonStruct struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Token   string `json:"token"`
 }
 
 type reputationJson struct {
@@ -44,7 +76,60 @@ type reputationJson struct {
 	Token      string `json:"_token"`
 }
 
+type captchaResponseStruct struct {
+	Status  int    `json:"status"`
+	Request string `json:"request"`
+}
+
+type RSA struct {
+}
+
+func H2b(encoded string) []byte {
+	decoded, _ := hex.DecodeString(encoded)
+	return decoded
+}
+
+func B2h(text []byte) string {
+	return hex.EncodeToString(text)
+}
+
+func (RSA) EncryptRsa(key rsa.PublicKey, message []byte) []byte {
+	encrypted, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &key, message, []byte(""))
+	H(err)
+	return encrypted
+}
+
+func (RSA) DecryptRsa(key rsa.PrivateKey, message []byte) []byte {
+	decrypted, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, &key, message, []byte(""))
+	H(err)
+	return decrypted
+}
+
+func (RSA) SignRsa(key rsa.PrivateKey, data []byte) []byte {
+	var opts rsa.PSSOptions
+	opts.SaltLength = rsa.PSSSaltLengthAuto
+	res, err := rsa.SignPSS(rand.Reader, &key, crypto.SHA256, Sha256BtB(data), &opts)
+	H(err)
+	return res
+}
+
+func (RSA) VerifySign(pubKey rsa.PublicKey, data, sign []byte) {
+	var opts rsa.PSSOptions
+	opts.SaltLength = rsa.PSSSaltLengthAuto
+	err := rsa.VerifyPSS(&pubKey, crypto.SHA256, Sha256BtB(data), sign, &opts)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func H(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func EncryptBtB(strkey string, text []byte) []byte {
+	//fmt.Println(string(text))
 	key, _ := hex.DecodeString(strkey)
 	plaintext := text
 
@@ -62,7 +147,16 @@ func EncryptBtB(strkey string, text []byte) []byte {
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 
-	return ciphertext
+	//fmt.Println(len(rr))
+	return []byte(base64.StdEncoding.EncodeToString(ciphertext))
+}
+
+func Rev(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 func DecryptBtB(strkey string, bytes []byte) []byte {
@@ -71,15 +165,23 @@ func DecryptBtB(strkey string, bytes []byte) []byte {
 	// real.) If you want to convert a passphrase to a key, use a suitable
 	// package like bcrypt or scrypt.
 	key, _ := hex.DecodeString(strkey)
-	ciphertext := bytes
+	ciphertext, err := base64.StdEncoding.DecodeString(string(bytes))
+	if err != nil {
+		fmt.Println(string(bytes))
+		log.Println(err)
+		return []byte{}
+	}
 
 	block, err := aes.NewCipher(key)
+	//fmt.Println(len(bytes))
 	if err != nil {
 		panic(err)
 	}
 
 	if len(ciphertext) < aes.BlockSize {
-		panic("ciphertext too short")
+		log.Println("ciphertext too short: " + strconv.Itoa(len(bytes)))
+		return []byte{}
+		panic("ciphertext too short: " + strconv.Itoa(len(bytes)))
 	}
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
@@ -88,6 +190,14 @@ func DecryptBtB(strkey string, bytes []byte) []byte {
 	stream.XORKeyStream(ciphertext, ciphertext)
 	return ciphertext
 }
+
+//func EncryptBtB(password string, text []byte) []byte {
+//	return []byte(aes256.Encrypt(string(text), password))
+//}
+//
+//func DecryptBtB(password string, text []byte) []byte {
+//	return []byte(aes256.Decrypt(string(text), password))
+//}
 
 func EncryptStH(strkey string, str string) string {
 	return hex.EncodeToString(EncryptBtB(strkey, []byte(str)))
@@ -99,8 +209,27 @@ func DecryptHtS(strkey string, hexStr string) string {
 }
 
 func Sha256StH(text string) string {
+	return hex.EncodeToString(Sha256BtB([]byte(text)))
+}
+
+func Sha256BtB(data []byte) []byte {
 	h := sha256.New()
-	h.Write([]byte(text))
+	h.Write(data)
+	return h.Sum(nil)
+}
+
+func Sha256File(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		log.Fatal(err)
+	}
+
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -111,12 +240,28 @@ func FileExist(path string) bool {
 	return true
 }
 
-func readFile(path string) string {
+func ReadFile(path string) string {
 	text, e := ioutil.ReadFile(path)
 	if e != nil {
 		panic(e)
 	}
 	return string(text)
+}
+
+func ReadFileBytes(path string) []byte {
+	text, e := ioutil.ReadFile(path)
+	if e != nil {
+		panic(e)
+	}
+	return text
+}
+
+func ReadFiles(paths []string) []string {
+	var data []string
+	for _, path := range paths {
+		data = append(data, ReadFile(path))
+	}
+	return data
 }
 
 func FindGroup(text string, reg string) []string {
@@ -185,6 +330,15 @@ func DbSet(db *leveldb.DB, key string, value interface{}) {
 	_ = db.Put([]byte(key), value.([]byte), nil)
 }
 
+func DbHas(db *leveldb.DB, key string) bool {
+	has, _ := db.Has([]byte(key), nil)
+	return has
+}
+
+func DbDelete(db *leveldb.DB, key string) {
+	db.Delete([]byte(key), nil)
+}
+
 func Contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
@@ -196,6 +350,7 @@ func Contains(s []string, e string) bool {
 
 func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
 	if len(args)%2 != 0 {
+		fmt.Println(len(args))
 		return ""
 	}
 
@@ -211,21 +366,82 @@ func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
 	return response
 }
 
-func getMD5Hash(text string) string {
+func Md5(data string) string {
 	hasher := md5.New()
-	hasher.Write([]byte(text))
+	hasher.Write([]byte(data))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func (scUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
+func Md5b(data []byte) string {
+	hasher := md5.New()
+	hasher.Write(data)
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func DecodeWindows1251(ba []uint8) []uint8 {
+	dec := charmap.Windows1251.NewDecoder()
+	out, _ := dec.Bytes(ba)
+	return out
+}
+
+func capSolve(ses *gorequest.SuperAgent, url, action, key, apikey string) (string, string) {
+	gurl := "https://rucaptcha.com/in.php?key=%s&method=userrecaptcha&version=v3&action=%s&min_score=0.9&" +
+		"googlekey=%s&pageurl=%s&json=1"
+	gurl = fmt.Sprintf(gurl, apikey, action, key, url)
+	_, response, _ := ses.Get(gurl).EndBytes()
+	var capchaResponse1 captchaResponseStruct
+	_ = json.Unmarshal(response, &capchaResponse1)
+	if capchaResponse1.Status != 1 {
+		os.Exit(-10)
+	}
+	var capchaResponse2 captchaResponseStruct
+	for capchaResponse2.Request == "" || capchaResponse2.Request == "CAPCHA_NOT_READY" {
+		_, capchaResponse2B, _ := ses.Get(fmt.Sprintf("https://rucaptcha.com/res.php?key=%s&action=get&taskinfo=0&json=1&id=%s", apikey, capchaResponse1.Request)).EndBytes()
+		_ = json.Unmarshal(capchaResponse2B, &capchaResponse2)
+		time.Sleep(2000 * time.Millisecond)
+	}
+	return capchaResponse2.Request, capchaResponse1.Request
+}
+
+func capReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
+	var action string
+	if good {
+		action = "reportgood"
+	} else {
+		action = "reportbad"
+	}
+	_, aga, _ := ses.Get(fmt.Sprintf("https://rucaptcha.com/res.php?key=%s&action=%s&id=%s", apikey, action, capid)).End()
+	fmt.Println(aga)
+}
+
+func MachineID() (string, error) {
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Cryptography`, registry.QUERY_VALUE|registry.WOW64_64KEY)
+	if err != nil {
+		return "", err
+	}
+	defer k.Close()
+
+	s, _, err := k.GetStringValue("MachineGuid")
+	if err != nil {
+		return "", err
+	}
+	return s, nil
+}
+
+func (ScUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
-	const siteKey = "6LcUwBgUAAAAAAyJnKWJvhBNNzItS7DlHoARaQbG"
-	const pageUrl = "https://streamcraft.net/register"
+	const siteKey = "6LeedroUAAAAAK2RUkaNLVBYraeQXNVHX45O227A"
+	const pageUrl = "https://streamcraft.net/api/auth/register"
 	const regexToken = `<meta name="csrf-token" content="(?P<token>.*)">`
+	const action = "register"
+
 register:
-	_, page, _ := ses.Get(pageUrl).End()
+	resp, page, _ := ses.Get(pageUrl).End()
 
 	csrf := FindGroup(page, regexToken)[1]
+
+	xsrf := (*http.Response)(resp).Cookies()[1].Value
+	//os.Exit(111)
 	email := randomdata.Email()
 	name := randomdata.FirstName(randomdata.Number(1, 2))
 	length := 8
@@ -236,31 +452,31 @@ register:
 	password := login + login
 
 	//RuCaptcha
-	re := rucaptcha.New(ruCaptchaKey)
-	captcha, err := re.ReCaptcha(pageUrl, siteKey)
-	if err != nil {
-		goto register
-		//panic(err)
-	}
+	//capSolve(ses, pageUrl, action, siteKey, ruCaptchaKey)
 
-	var Json = registerJson{}
+	var Json registerJson
+	var capid string
 	Json.Login = login
 	Json.Password = password
-	Json.PasswordConfirm = password
+	Json.Captcha, capid = capSolve(ses, pageUrl, action, siteKey, ruCaptchaKey)
 	Json.Email = email
-	Json.Captcha = captcha
-	Json.Token = csrf
 	Jsonb, _ := json.Marshal(Json)
 
-	_, data, _ := ses.Post(pageUrl).Send(string(Jsonb)).End()
-	if data != `{"success":true,"redirect":"https:\/\/streamcraft.net\/home"}` {
-		fmt.Println("Error while solving captcha! Trying again...", data)
+	_, data, _ := ses.Post(pageUrl).Set("x-csrf-token", csrf).Set("x-xsrf-token", xsrf).Send(string(Jsonb)).EndBytes()
+	var registerResponseJson registerResponseJsonStruct
+	_ = json.Unmarshal(data, &registerResponseJson)
+	if registerResponseJson.Success == true {
+		capReport(ses, true, ruCaptchaKey, capid)
+	} else {
+		capReport(ses, true, ruCaptchaKey, capid)
 		goto register
 	}
+
+	fmt.Println(string(data))
 	return login, password, csrf
 }
 
-func (scUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
+func (ScUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
 	//Set user reputation
 	const pageUrl = "https://streamcraft.net/forum/user/reputation"
 
@@ -273,7 +489,7 @@ func (scUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int,
 	ses.Post(pageUrl).Send(string(JsonB)).End()
 }
 
-func (scUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
+func (ScUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
 	//Get user id
 	const pageUrl = "https://streamcraft.net/user/"
 	const regexUserId = `<i class="fa fa-thumbs-down cursor-pointer" onclick="App\.sendRequest\('/forum/user/reputation', {user: (?P<id>.*), reputation: -1}\);"></i>`
@@ -283,7 +499,7 @@ func (scUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
 	return id
 }
 
-func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
+func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	const regexThreads = `<a href="/forum/category/(?P<id>.*)"><i class="fa fa-level-down">`
 	const regexThreadsIds = `<a class="btn btn-primary btn-shadow float-right" href="/forum/discussion/create/(?P<id>.*)" role="button">`
 	const ForumUrl = "https://streamcraft.net/forum/"
@@ -303,17 +519,98 @@ func (scUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	return threadsIds
 }
 
-func (k773Utils) H2s(hex string) string {
+func (K773Utils) H2s(hex string) string {
 	src := []byte(hex)
 	n, _ := decode(src, src)
 	return string(src[:n])
 }
 
-func (k773Utils) S2h(text string) string {
+func (K773Utils) S2h(text string) string {
 	src := []byte(text)
 	dst := make([]byte, encodedLen(len(src)))
 	encode(dst, src)
 	return string(dst)
+}
+
+func (K773Utils) DecryptAes(data, key string) string {
+	var request requestStruct
+	request.What, request.Data, request.Key = "decrypt", data, key
+	marshalled, _ := json.Marshal(request)
+	_, response, _ := gorequest.New().Post(serverAddr).
+		Send(string(marshalled)).
+		End()
+	return response
+}
+
+func (K773Utils) EncryptAes(data, key string) string {
+	var request requestStruct
+	request.What, request.Data, request.Key = "encrypt", data, key
+	marshalled, _ := json.Marshal(request)
+	_, response, _ := gorequest.New().Post(serverAddr).
+		Send(string(marshalled)).
+		End()
+	return response
+}
+
+func SetDiscordStatus(server ServerStruct, nickname string) {
+start:
+	win := discordrpc.NewRPCConnection("496419141201297413")
+	err := win.Open()
+	if err != nil {
+		//fmt.Println(err)
+		time.Sleep(5 * time.Second)
+		goto start
+	}
+
+	_, _ = win.Read()
+	//fmt.Println(err)
+	//fmt.Println(str)
+
+	//time.Sleep(time.Second * 3)
+	stamp := time.Now().Unix()
+
+	for {
+		//fmt.Println(os.Getpid())
+		presence := &discordrpc.CommandRichPresenceMessage{
+			CommandMessage: discordrpc.CommandMessage{Command: "SET_ACTIVITY"},
+			Args: &discordrpc.RichPresenceMessageArgs{
+				Pid: os.Getpid(),
+				Activity: &discordrpc.Activity{
+					Details:    "Играет на " + server.ServerName,
+					State:      "С ником " + nickname,
+					Instance:   false,
+					TimeStamps: &discordrpc.TimeStamps{StartTimestamp: stamp},
+					Assets: &discordrpc.Assets{
+						LargeText:    server.LargeText,
+						LargeImageID: server.LargeTextId,
+						SmallText:    "StreamCraft.Net",
+						SmallImageID: "discord",
+					},
+				},
+			},
+		}
+
+		presence.SetNonce()
+		data, err := json.Marshal(presence)
+
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		err = win.Write(string(data))
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		//str, err := win.Read()
+		//fmt.Println(err)
+		//fmt.Println(str)
+		//
+		//fmt.Println("---\nDone?")
+		time.Sleep(time.Second * 5)
+	}
 }
 
 func encodedLen(n int) int { return n * 2 }
@@ -363,7 +660,31 @@ func fromHexChar(c byte) (byte, bool) {
 	return 0, false
 }
 
-func decryptAes128Ecb(data, key string) string {
-	_, response, _ := gorequest.New().Post("http://212.237.2.10/gethashes.php?what=decrypt").Send(fmt.Sprintf("key=%s&data=%s", key, data)).End()
-	return response
+func U(something string) uintptr {
+	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(something)))
+}
+
+func (dialog *Dialog) CallDll() {
+	if dialog.DllFilePath != "" && dialog.DllObject == nil {
+		dialog.DllObject = syscall.NewLazyDLL(dialog.DllFilePath)
+	}
+}
+
+func (dialog *Dialog) YesNo(title, label, yesButtonText, noButtonText string) (bool, bool) {
+	proc := dialog.DllObject.NewProc("YesNo")
+	code, _, _ := proc.Call(U(title), U(label), U(yesButtonText), U(noButtonText))
+	switch code {
+	case 0:
+		return false, false
+	case 100:
+		return false, true
+	case 101:
+		return true, true
+	}
+	return false, false
+}
+
+func (dialog *Dialog) TextInput(title, label, buttonText string) (uintptr, uintptr, error) {
+	proc := dialog.DllObject.NewProc("TextInputDialog")
+	return proc.Call(U(title), U(label), U(buttonText))
 }
