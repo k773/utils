@@ -40,10 +40,10 @@ type ScUtils struct {
 type K773Utils struct {
 }
 
-type Dialog struct {
-	DllFilePath string
-	DllObject   *syscall.LazyDLL
-}
+//type Dialog struct {
+//	DllFilePath string
+//	DllObject   *syscall.LazyDLL
+//}
 
 type ServerStruct struct {
 	ServerName  string
@@ -664,27 +664,27 @@ func U(something string) uintptr {
 	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(something)))
 }
 
-func (dialog *Dialog) CallDll() {
-	if dialog.DllFilePath != "" && dialog.DllObject == nil {
-		dialog.DllObject = syscall.NewLazyDLL(dialog.DllFilePath)
-	}
-}
-
-func (dialog *Dialog) YesNo(title, label, yesButtonText, noButtonText string) (bool, bool) {
-	proc := dialog.DllObject.NewProc("YesNo")
-	code, _, _ := proc.Call(U(title), U(label), U(yesButtonText), U(noButtonText))
-	switch code {
-	case 0:
-		return false, false
-	case 100:
-		return false, true
-	case 101:
-		return true, true
-	}
-	return false, false
-}
-
-func (dialog *Dialog) TextInput(title, label, buttonText string) (uintptr, uintptr, error) {
-	proc := dialog.DllObject.NewProc("TextInputDialog")
-	return proc.Call(U(title), U(label), U(buttonText))
-}
+//func (dialog *Dialog) CallDll() {
+//	if dialog.DllFilePath != "" && dialog.DllObject == nil {
+//		dialog.DllObject = syscall.NewLazyDLL(dialog.DllFilePath)
+//	}
+//}
+//
+//func (dialog *Dialog) YesNo(title, label, yesButtonText, noButtonText string) (bool, bool) {
+//	proc := dialog.DllObject.NewProc("YesNo")
+//	code, _, _ := proc.Call(U(title), U(label), U(yesButtonText), U(noButtonText))
+//	switch code {
+//	case 0:
+//		return false, false
+//	case 100:
+//		return false, true
+//	case 101:
+//		return true, true
+//	}
+//	return false, false
+//}
+//
+//func (dialog *Dialog) TextInput(title, label, buttonText string) (uintptr, uintptr, error) {
+//	proc := dialog.DllObject.NewProc("TextInputDialog")
+//	return proc.Call(U(title), U(label), U(buttonText))
+//}
