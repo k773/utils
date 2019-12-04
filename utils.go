@@ -17,7 +17,7 @@ import (
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
-	"golang.org/x/sys/windows/registry"
+	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
 	"io"
 	"io/ioutil"
@@ -181,7 +181,7 @@ func DecryptBtB(strkey string, bytes []byte) []byte {
 	if len(ciphertext) < aes.BlockSize {
 		log.Println("ciphertext too short: " + strconv.Itoa(len(bytes)))
 		return []byte{}
-		panic("ciphertext too short: " + strconv.Itoa(len(bytes)))
+		//panic("ciphertext too short: " + strconv.Itoa(len(bytes)))
 	}
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
@@ -414,19 +414,19 @@ func capReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
 	fmt.Println(aga)
 }
 
-func MachineID() (string, error) {
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Cryptography`, registry.QUERY_VALUE|registry.WOW64_64KEY)
-	if err != nil {
-		return "", err
-	}
-	defer k.Close()
-
-	s, _, err := k.GetStringValue("MachineGuid")
-	if err != nil {
-		return "", err
-	}
-	return s, nil
-}
+//func MachineID() (string, error) {
+//	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Cryptography`, registry.QUERY_VALUE|registry.WOW64_64KEY)
+//	if err != nil {
+//		return "", err
+//	}
+//	defer k.Close()
+//
+//	s, _, err := k.GetStringValue("MachineGuid")
+//	if err != nil {
+//		return "", err
+//	}
+//	return s, nil
+//}
 
 func (ScUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
