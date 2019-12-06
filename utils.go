@@ -105,7 +105,7 @@ func (RSA) ExportKey(key rsa.PublicKey) []byte {
 }
 
 func (RSA) ImportKey(key string) rsa.PublicKey {
-	data, _ := pem.Decode(H2b(key))
+	data, _ := pem.Decode([]byte(key))
 	serverPubKey, err := x509.ParsePKCS1PublicKey(data.Bytes)
 	H(err)
 	return *serverPubKey
