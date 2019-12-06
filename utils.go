@@ -17,7 +17,6 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
-	"github.com/k773/utils"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
 	//"golang.org/x/sys/windows/registry"
@@ -106,7 +105,7 @@ func (RSA) ExportKey(key rsa.PublicKey) []byte {
 }
 
 func (RSA) ImportKey(key string) rsa.PublicKey {
-	data, _ := pem.Decode(utils.H2b(key))
+	data, _ := pem.Decode(H2b(key))
 	serverPubKey, err := x509.ParsePKCS1PublicKey(data.Bytes)
 	H(err)
 	return *serverPubKey
