@@ -8,13 +8,16 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
+	"github.com/k773/utils"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
 	//"golang.org/x/sys/windows/registry"
@@ -91,6 +94,22 @@ func H2b(encoded string) []byte {
 
 func B2h(text []byte) string {
 	return hex.EncodeToString(text)
+}
+
+func (RSA) ExportKey(key rsa.PublicKey) []byte {
+	bytes1 := x509.MarshalPKCS1PublicKey(&key)
+	var pemKey = &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: bytes1,
+	}
+	return pem.EncodeToMemory(pemKey)
+}
+
+func (RSA) ImportKey(key string) rsa.PublicKey {
+	data, _ := pem.Decode(utils.H2b(key))
+	serverPubKey, err := x509.ParsePKCS1PublicKey(data.Bytes)
+	H(err)
+	return *serverPubKey
 }
 
 func (RSA) EncryptRsa(key rsa.PublicKey, message []byte) []byte {
