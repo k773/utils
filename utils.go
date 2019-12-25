@@ -19,6 +19,8 @@ import (
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
+	"strings"
+
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
 	"io"
@@ -95,6 +97,10 @@ func B2h(text []byte) string {
 	return hex.EncodeToString(text)
 }
 
+func H2s(text string) string {
+	return hex.EncodeToString([]byte(text))
+}
+
 func (RSA) ExportKey(key rsa.PublicKey) []byte {
 	bytes1 := x509.MarshalPKCS1PublicKey(&key)
 	var pemKey = &pem.Block{
@@ -132,8 +138,7 @@ func (RSA) SignRsa(key rsa.PrivateKey, data []byte) []byte {
 }
 
 func (RSA) VerifySign(pubKey rsa.PublicKey, data, sign []byte) {
-	var opts rsa.PSSOptions
-	opts.SaltLength = rsa.PSSSaltLengthAuto
+	var opts rsa.PSSOptions = rsa.PSSOptions{SaltLength: 20}
 	err := rsa.VerifyPSS(&pubKey, crypto.SHA256, Sha256BtB(data), sign, &opts)
 	if err != nil {
 		panic(err)
@@ -167,6 +172,17 @@ func EncryptBtB(strkey string, text []byte) []byte {
 
 	//fmt.Println(len(rr))
 	return []byte(base64.StdEncoding.EncodeToString(ciphertext))
+}
+
+func CountMapElementsStartsWith(m map[string]interface{}, text string) int {
+	count := 0
+	for key, _ := range m {
+		//fmt.Println(key)
+		if strings.HasPrefix(key, text) {
+			count++
+		}
+	}
+	return count
 }
 
 func Rev(s string) string {
@@ -332,6 +348,19 @@ func GetServerPlayers(ip string) []string {
 	return playersArray
 }
 
+func BytesToBool(bytes []byte) bool {
+	ret, err := strconv.ParseBool(string(bytes))
+	H(err)
+	return ret
+}
+
+func DbGet_(db *leveldb.DB, key string, defVal []byte) []byte {
+	if DbHas(db, key) {
+		return DbGet(db, key)
+	}
+	return defVal
+}
+
 func DbGet(db *leveldb.DB, key string) []byte {
 	val, err := db.Get([]byte(key), nil)
 	if err != nil {
@@ -358,6 +387,15 @@ func DbDelete(db *leveldb.DB, key string) {
 }
 
 func Contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func ContainsInt(s []int, e int) bool {
 	for _, a := range s {
 		if a == e {
 			return true
