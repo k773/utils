@@ -174,6 +174,10 @@ func EncryptBtB(strkey string, text []byte) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(ciphertext))
 }
 
+func ccc() {
+
+}
+
 func CountMapElementsStartsWith(m map[string]interface{}, text string) int {
 	count := 0
 	for key, _ := range m {
