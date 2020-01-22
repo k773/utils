@@ -9,6 +9,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -42,6 +43,10 @@ type ScUtils struct {
 }
 
 type K773Utils struct {
+}
+
+type MySqlUtils struct {
+	Db *sql.DB
 }
 
 //type Dialog struct {
@@ -390,13 +395,40 @@ func DbDelete(db *leveldb.DB, key string) {
 	db.Delete([]byte(key), nil)
 }
 
-func Contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
+func (u MySqlUtils) DbSet(command string, args ...interface{}) {
+	_, err := u.Db.Exec(command, args)
+	H(err)
+}
+
+func (u MySqlUtils) DbGet(command string, args ...interface{}) [][]interface{} {
+	if u.Db == nil {
+		panic("E1")
 	}
-	return false
+	rows, err := u.Db.Query("SELECT * FROM messages WHERE 1")
+	H(err)
+	columns, err := rows.Columns()
+	H(err)
+	values := make([]sql.RawBytes, len(columns))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+	var ret [][]interface{}
+	for rows.Next() {
+		// get RawBytes from data
+		err = rows.Scan(scanArgs...)
+		H(err)
+		var value []interface{}
+		for _, col := range values {
+			if col == nil {
+				value = append(value, nil)
+				continue
+			}
+			value = append(value, []byte(col))
+		}
+		ret = append(ret, value)
+	}
+	return ret
 }
 
 func ContainsInt(s []int, e int) bool {
