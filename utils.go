@@ -381,9 +381,9 @@ func DbGet(db *leveldb.DB, key string) []byte {
 	return val
 }
 
-func DbSet(db *leveldb.DB, key string, value interface{}) {
+func DbSet(db *leveldb.DB, key string, value *interface{}) {
 	_ = db.Delete([]byte(key), nil)
-	_ = db.Put([]byte(key), value.([]byte), nil)
+	_ = db.Put([]byte(key), (*value).([]byte), nil)
 }
 
 func DbHas(db *leveldb.DB, key string) bool {
