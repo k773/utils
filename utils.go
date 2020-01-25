@@ -440,9 +440,29 @@ func ContainsInt(s *[]int, e *int) bool {
 	return false
 }
 
+//With memory leak
+func ContainsInt_(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func ContainsString(s *[]string, e *string) bool {
 	for _, a := range *s {
 		if a == *e {
+			return true
+		}
+	}
+	return false
+}
+
+//With memory leak
+func ContainsString_(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
 			return true
 		}
 	}
