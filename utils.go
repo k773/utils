@@ -156,33 +156,6 @@ func H(err error) {
 	}
 }
 
-func EncryptBtB(strkey string, text []byte) []byte {
-	//fmt.Println(string(text))
-	key, _ := hex.DecodeString(strkey)
-	plaintext := text
-
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
-	}
-
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
-
-	//fmt.Println(len(rr))
-	return []byte(base64.StdEncoding.EncodeToString(ciphertext))
-}
-
-func ccc() {
-
-}
-
 func CountMapElementsStartsWith(m map[string]interface{}, text string) int {
 	count := 0
 	for key, _ := range m {
@@ -202,53 +175,71 @@ func Rev(s string) string {
 	return string(runes)
 }
 
-func DecryptBtB(strkey string, bytes []byte) []byte {
-	// Load your secret key from a safe place and reuse it across multiple
-	// NewCipher calls. (Obviously don't use this example key for anything
-	// real.) If you want to convert a passphrase to a key, use a suitable
-	// package like bcrypt or scrypt.
-	key, _ := hex.DecodeString(strkey)
-	ciphertext, err := base64.StdEncoding.DecodeString(string(bytes))
-	if err != nil {
-		fmt.Println(string(bytes))
-		log.Println(err)
-		return []byte{}
-	}
-
+func Encrypt(key, data []byte) []byte {
 	block, err := aes.NewCipher(key)
-	//fmt.Println(len(bytes))
 	if err != nil {
 		panic(err)
 	}
 
-	if len(ciphertext) < aes.BlockSize {
-		log.Println("ciphertext too short: " + strconv.Itoa(len(bytes)))
-		return []byte{}
-		//panic("ciphertext too short: " + strconv.Itoa(len(bytes)))
-	}
+	ciphertext := make([]byte, aes.BlockSize+len(data))
 	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic(err)
+	}
 
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], data)
+
 	return ciphertext
 }
 
-//func EncryptBtB(password string, text []byte) []byte {
-//	return []byte(aes256.Encrypt(string(text), password))
-//}
-//
-//func DecryptBtB(password string, text []byte) []byte {
-//	return []byte(aes256.Decrypt(string(text), password))
-//}
+func Decrypt(key, data, iv []byte) []byte {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
 
-func EncryptStH(strkey string, str string) string {
-	return hex.EncodeToString(EncryptBtB(strkey, []byte(str)))
+	if len(data) < aes.BlockSize {
+		log.Println("ciphertext too short: " + strconv.Itoa(len(data)))
+		return []byte{}
+	}
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(data, data)
+	return data
 }
 
-func DecryptHtS(strkey string, hexStr string) string {
+func DecryptBtB(strkey string, bytes []byte) []byte {
+	return Decrypt(H2b(strkey), bytes[aes.BlockSize:], bytes[:aes.BlockSize])
+}
+
+func DecryptHtB(strkey, hexData string) []byte {
+	data := H2b(hexData)
+	return Decrypt(H2b(strkey), data[aes.BlockSize:], data[:aes.BlockSize])
+}
+
+func DecryptHtS(strkey, hexStr string) string {
 	ciphertext, _ := hex.DecodeString(hexStr)
-	return string(DecryptBtB(strkey, ciphertext))
+	//fmt.Println("IV:", B2h(ciphertext[:aes.BlockSize]))
+	//fmt.Println("Data:", B2h(ciphertext[aes.BlockSize:]))
+	return string(Decrypt(H2b(strkey), ciphertext[aes.BlockSize:], ciphertext[:aes.BlockSize]))
+}
+
+func DecryptB64tB(strkey, b64 string) []byte {
+	ciphertext, _ := base64.StdEncoding.DecodeString(b64)
+	return Decrypt(H2b(strkey), ciphertext[aes.BlockSize:], ciphertext[:aes.BlockSize])
+}
+
+func EncryptBtB(strkey string, data []byte) []byte {
+	return Encrypt(H2b(strkey), data)
+}
+
+func EncryptBtH(strkey string, data []byte) string {
+	return hex.EncodeToString(Encrypt(H2b(strkey), data))
+}
+
+func EncryptBtB64(strkey string, data []byte) string {
+	return base64.StdEncoding.EncodeToString(Encrypt(H2b(strkey), data))
 }
 
 func Sha256StH(text string) string {
