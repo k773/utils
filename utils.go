@@ -490,6 +490,15 @@ func Md5b(data []byte) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
+func GetElementIndexInSlice(slice []interface{}, element interface{}) int {
+	for i, val := range slice {
+		if val == element {
+			return i
+		}
+	}
+	return -1
+}
+
 func DecodeWindows1251(ba []uint8) []uint8 {
 	dec := charmap.Windows1251.NewDecoder()
 	out, _ := dec.Bytes(ba)
