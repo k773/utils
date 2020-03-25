@@ -93,6 +93,9 @@ type captchaResponseStruct struct {
 type RSA struct {
 }
 
+type SliceTools struct {
+}
+
 func H2b(encoded string) []byte {
 	decoded, _ := hex.DecodeString(encoded)
 	return decoded
@@ -158,8 +161,7 @@ func H(err error) {
 
 func CountMapElementsStartsWith(m map[string]interface{}, text string) int {
 	count := 0
-	for key, _ := range m {
-		//fmt.Println(key)
+	for key := range m {
 		if strings.HasPrefix(key, text) {
 			count++
 		}
@@ -257,7 +259,7 @@ func Sha256File(path string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
+	defer H(f.Close())
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -382,46 +384,6 @@ func DbHas(db *leveldb.DB, key string) bool {
 	return has
 }
 
-func DbDelete(db *leveldb.DB, key string) {
-	db.Delete([]byte(key), nil)
-}
-
-func (u MySqlUtils) DbSet(command string, args ...interface{}) {
-	_, err := u.Db.Exec(command, args)
-	H(err)
-}
-
-func (u MySqlUtils) DbGet(command string, args ...interface{}) [][]interface{} {
-	if u.Db == nil {
-		panic("E1")
-	}
-	rows, err := u.Db.Query("SELECT * FROM messages WHERE 1")
-	H(err)
-	columns, err := rows.Columns()
-	H(err)
-	values := make([]sql.RawBytes, len(columns))
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
-	}
-	var ret [][]interface{}
-	for rows.Next() {
-		// get RawBytes from data
-		err = rows.Scan(scanArgs...)
-		H(err)
-		var value []interface{}
-		for _, col := range values {
-			if col == nil {
-				value = append(value, nil)
-				continue
-			}
-			value = append(value, []byte(col))
-		}
-		ret = append(ret, value)
-	}
-	return ret
-}
-
 func ContainsInt(s *[]int, e *int) bool {
 	for _, a := range *s {
 		if a == *e {
@@ -431,7 +393,6 @@ func ContainsInt(s *[]int, e *int) bool {
 	return false
 }
 
-//With memory leak
 func ContainsInt_(s []int, e int) bool {
 	for _, a := range s {
 		if a == e {
@@ -450,7 +411,6 @@ func ContainsString(s *[]string, e *string) bool {
 	return false
 }
 
-//With memory leak
 func ContainsString_(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
@@ -458,24 +418,6 @@ func ContainsString_(s []string, e string) bool {
 		}
 	}
 	return false
-}
-
-func GetRequest(ses *gorequest.SuperAgent, url string, args ...string) string {
-	if len(args)%2 != 0 {
-		fmt.Println(len(args))
-		return ""
-	}
-
-	for i, arg := range args {
-		if i%2 == 0 {
-			url += arg + "="
-		} else {
-			url += arg + "&"
-		}
-	}
-
-	_, response, _ := ses.Get(url).End()
-	return response
 }
 
 func Md5(data string) string {
@@ -490,7 +432,7 @@ func Md5b(data []byte) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func GetElementIndexInSlice(slice []interface{}, element interface{}) int {
+func (SliceTools) GetIntIndex(slice []int, element int) int {
 	for i, val := range slice {
 		if val == element {
 			return i
@@ -630,7 +572,7 @@ func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	temp := FindGroups(text, regexThreads)
 	var threadsIds []string
 	for _, thread := range temp {
-		_, temp2, _ := ses.Get(CategoryUrl + string(thread)).End()
+		_, temp2, _ := ses.Get(CategoryUrl + thread).End()
 		temp3 := FindGroup(temp2, regexThreadsIds)
 		if len(temp3) < 2 {
 			continue
