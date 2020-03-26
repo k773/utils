@@ -119,7 +119,6 @@ func H2s(h string) string {
 func (RSA) ExportKey(key rsa.PublicKey) []byte {
 	bytes1 := x509.MarshalPKCS1PublicKey(&key)
 	var pemKey = &pem.Block{
-
 		Type:  "PUBLIC KEY",
 		Bytes: bytes1,
 	}
