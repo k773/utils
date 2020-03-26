@@ -105,8 +105,15 @@ func B2h(text []byte) string {
 	return hex.EncodeToString(text)
 }
 
-func H2s(text string) string {
+func S2h(text string) string {
 	return hex.EncodeToString([]byte(text))
+}
+
+func H2s(h string) string {
+	if val, err := hex.DecodeString(h); err == nil {
+		return string(val)
+	}
+	return ""
 }
 
 func (RSA) ExportKey(key rsa.PublicKey) []byte {
@@ -217,6 +224,7 @@ func DecryptBtB(strkey string, bytes []byte) []byte {
 
 func DecryptHtB(strkey, hexData string) []byte {
 	data := H2b(hexData)
+	//fmt.Println(hexData, data)
 	return Decrypt(H2b(strkey), data[aes.BlockSize:], data[:aes.BlockSize])
 }
 
