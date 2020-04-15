@@ -20,13 +20,13 @@ import (
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
+	"log"
 	"strings"
 
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -114,6 +114,15 @@ func H2s(h string) string {
 		return string(val)
 	}
 	return ""
+}
+
+func GoLog(args ...interface{}) {
+	var string_ string
+	for _, element := range args {
+		string_ += fmt.Sprintf("%v", element) + " "
+	}
+	timeString := time.Now().String()[:19]
+	fmt.Println(fmt.Sprintf("[%v]", timeString)+":", string_)
 }
 
 func (RSA) ExportKey(key rsa.PublicKey) []byte {
