@@ -96,18 +96,28 @@ type RSA struct {
 type SliceTools struct {
 }
 
-func compareIntArrays(arr []int, arr2 []int) (bool, int, int) {
-	for _, value := range arr {
-		if !ContainsInt_(arr2, value) {
-			return true, value, 0
+func SplitStringByCount(str string, maxCount int) []string {
+	var ret []string
+	for i := 0; true; i += maxCount {
+		str = getSymbols(str, i, maxCount)
+		ret = append(ret, str)
+		if len(str) != maxCount {
+			break
 		}
 	}
-	for _, value := range arr2 {
-		if !ContainsInt_(arr, value) {
-			return true, value, 1
-		}
+	return ret
+}
+
+func getSymbols(str string, startIndex, count int) string {
+	var ret string
+	str = str[startIndex:]
+	if len(str) < count {
+		count = len(str)
 	}
-	return false, 0, 0
+	for i := 0; i < count; i++ {
+		ret += string(str[i])
+	}
+	return ret
 }
 
 func H2b(encoded string) []byte {
