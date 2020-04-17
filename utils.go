@@ -96,18 +96,18 @@ type RSA struct {
 type SliceTools struct {
 }
 
-func compareIntArrays(arr []int, arr2 []int) (bool, int) {
+func compareIntArrays(arr []int, arr2 []int) (bool, int, int) {
 	for _, value := range arr {
 		if !ContainsInt_(arr2, value) {
-			return true, value
+			return true, value, 0
 		}
 	}
 	for _, value := range arr2 {
 		if !ContainsInt_(arr, value) {
-			return true, value
+			return true, value, 1
 		}
 	}
-	return false, 0
+	return false, 0, 0
 }
 
 func H2b(encoded string) []byte {
