@@ -96,6 +96,20 @@ type RSA struct {
 type SliceTools struct {
 }
 
+func compareIntArrays(arr []int, arr2 []int) (bool, int) {
+	for _, value := range arr {
+		if !ContainsInt_(arr2, value) {
+			return true, value
+		}
+	}
+	for _, value := range arr2 {
+		if !ContainsInt_(arr, value) {
+			return true, value
+		}
+	}
+	return false, 0
+}
+
 func H2b(encoded string) []byte {
 	decoded, _ := hex.DecodeString(encoded)
 	return decoded
@@ -401,9 +415,9 @@ func DbHas(db *leveldb.DB, key string) bool {
 	return has
 }
 
-func ContainsInt(s *[]int, e *int) bool {
-	for _, a := range *s {
-		if a == *e {
+func ContainsInt(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
 			return true
 		}
 	}
@@ -419,9 +433,9 @@ func ContainsInt_(s []int, e int) bool {
 	return false
 }
 
-func ContainsString(s *[]string, e *string) bool {
-	for _, a := range *s {
-		if a == *e {
+func ContainsString(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
 			return true
 		}
 	}
