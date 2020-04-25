@@ -546,7 +546,7 @@ waitForCaptcha:
 	return capchaResponse2.Request, captchaResponse1.Request
 }
 
-func capReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
+func CapReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
 	var action string
 	if good {
 		action = "reportgood"
