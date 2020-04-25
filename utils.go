@@ -90,9 +90,9 @@ type captchaResponseStruct struct {
 	Request string `json:"request"`
 }
 
-const levelError = 0
-const levelInfo = 1
-const levelDebug = 2
+const LevelError = 0
+const LevelInfo = 1
+const LevelDebug = 2
 
 type RSA struct {
 }
@@ -159,19 +159,19 @@ func GoLog(args ...interface{}) {
 }
 
 func (logger Logger) Debug(data ...interface{}) {
-	if logger.LogLevel >= levelDebug {
+	if logger.LogLevel >= LevelDebug {
 		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "DEBUG"), data)
 	}
 }
 
 func (logger Logger) Error(data ...interface{}) {
-	if logger.LogLevel >= levelError {
+	if logger.LogLevel >= LevelError {
 		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "ERROR"), data)
 	}
 }
 
 func (logger Logger) Info(data ...interface{}) {
-	if logger.LogLevel >= levelInfo {
+	if logger.LogLevel >= LevelInfo {
 		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "INFO"), data)
 	}
 }
