@@ -520,7 +520,7 @@ begin:
 	return capchaResponse2.Request, capchaResponse1.Request
 }
 
-func capSolveV2(ses *gorequest.SuperAgent, url, key, apiKey string) (string, string) { //returns cap-response, cap-id
+func CapSolveV2(ses *gorequest.SuperAgent, url, key, apiKey string) (string, string) { //returns cap-response, cap-id
 startCaptcha:
 	gurl := "https://rucaptcha.com/in.php?key=%s&method=userrecaptcha&version=v2&" +
 		"googlekey=%s&pageurl=%s&json=1"
