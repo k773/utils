@@ -180,7 +180,7 @@ func (logger Logger) Error(data ...interface{}) {
 
 func (logger Logger) Info(data ...interface{}) {
 	if logger.LogLevel >= LevelInfo {
-		var string_ string
+		var string_ string //
 		for _, element := range data {
 			string_ += fmt.Sprintf("%v", element) + " "
 		}
