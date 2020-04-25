@@ -90,10 +90,19 @@ type captchaResponseStruct struct {
 	Request string `json:"request"`
 }
 
+const levelError = 0
+const levelInfo = 1
+const levelDebug = 2
+
 type RSA struct {
 }
 
 type SliceTools struct {
+}
+
+type Logger struct {
+	LogLevel   int
+	LoggerName string
 }
 
 func SplitStringByCount(str string, maxCount int) []string {
@@ -147,6 +156,24 @@ func GoLog(args ...interface{}) {
 	}
 	timeString := time.Now().String()[:19]
 	fmt.Println(fmt.Sprintf("[%v]", timeString)+":", string_)
+}
+
+func (logger Logger) Debug(data ...interface{}) {
+	if logger.LogLevel >= levelDebug {
+		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "DEBUG"), data)
+	}
+}
+
+func (logger Logger) Error(data ...interface{}) {
+	if logger.LogLevel >= levelError {
+		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "ERROR"), data)
+	}
+}
+
+func (logger Logger) Info(data ...interface{}) {
+	if logger.LogLevel >= levelInfo {
+		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "INFO"), data)
+	}
 }
 
 func (RSA) ExportKey(key rsa.PublicKey) []byte {
@@ -209,7 +236,7 @@ func CountMapElementsStartsWith(m map[string]interface{}, text string) int {
 	return count
 }
 
-func Rev(s string) string {
+func ReverseString(s string) string {
 	runes := []rune(s)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
@@ -434,25 +461,7 @@ func ContainsInt(s []int, e int) bool {
 	return false
 }
 
-func ContainsInt_(s []int, e int) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
 func ContainsString(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-func ContainsString_(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
 			return true
@@ -488,7 +497,8 @@ func DecodeWindows1251(ba []uint8) []uint8 {
 	return out
 }
 
-func capSolve(ses *gorequest.SuperAgent, url, action, key, apikey string) (string, string) {
+func CapSolveV3(ses *gorequest.SuperAgent, url, action, key, apikey string) (string, string) {
+begin:
 	gurl := "https://rucaptcha.com/in.php?key=%s&method=userrecaptcha&version=v3&action=%s&min_score=0.9&" +
 		"googlekey=%s&pageurl=%s&json=1"
 	gurl = fmt.Sprintf(gurl, apikey, action, key, url)
@@ -504,7 +514,36 @@ func capSolve(ses *gorequest.SuperAgent, url, action, key, apikey string) (strin
 		_ = json.Unmarshal(capchaResponse2B, &capchaResponse2)
 		time.Sleep(2000 * time.Millisecond)
 	}
+	if capchaResponse2.Request == "ERROR_CAPTCHA_UNSOLVABLE" {
+		goto begin
+	}
 	return capchaResponse2.Request, capchaResponse1.Request
+}
+
+func capSolveV2(ses *gorequest.SuperAgent, url, key, apiKey string) (string, string) { //returns cap-response, cap-id
+startCaptcha:
+	gurl := "https://rucaptcha.com/in.php?key=%s&method=userrecaptcha&version=v2&" +
+		"googlekey=%s&pageurl=%s&json=1"
+	gurl = fmt.Sprintf(gurl, apiKey, key, url)
+	_, response, _ := ses.Get(gurl).EndBytes()
+	var captchaResponse1 captchaResponseStruct
+	_ = json.Unmarshal(response, &captchaResponse1)
+	if captchaResponse1.Status != 1 {
+		goto startCaptcha
+	}
+
+	var capchaResponse2 captchaResponseStruct
+waitForCaptcha:
+	switch capchaResponse2.Request {
+	case "CAPCHA_NOT_READY", "":
+		_, capchaResponse2B, _ := ses.Get(fmt.Sprintf("https://rucaptcha.com/res.php?key=%s&action=get&taskinfo=0&json=1&id=%s", apiKey, captchaResponse1.Request)).EndBytes()
+		_ = json.Unmarshal(capchaResponse2B, &capchaResponse2)
+		time.Sleep(2000 * time.Millisecond)
+		goto waitForCaptcha
+	case "ERROR_CAPTCHA_UNSOLVABLE":
+		goto startCaptcha
+	}
+	return capchaResponse2.Request, captchaResponse1.Request
 }
 
 func capReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
@@ -556,13 +595,13 @@ register:
 	password := login + login
 
 	//RuCaptcha
-	//capSolve(ses, pageUrl, action, siteKey, ruCaptchaKey)
+	//CapSolveV3(ses, pageUrl, action, siteKey, ruCaptchaKey)
 
 	var Json registerJson
 	var capid string
 	Json.Login = login
 	Json.Password = password
-	Json.Captcha, capid = capSolve(ses, pageUrl, action, siteKey, ruCaptchaKey)
+	Json.Captcha, capid = CapSolveV3(ses, pageUrl, action, siteKey, ruCaptchaKey)
 	Json.Email = email
 	Jsonb, _ := json.Marshal(Json)
 
