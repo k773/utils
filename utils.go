@@ -609,9 +609,9 @@ register:
 	var registerResponseJson registerResponseJsonStruct
 	_ = json.Unmarshal(data, &registerResponseJson)
 	if registerResponseJson.Success == true {
-		capReport(ses, true, ruCaptchaKey, capid)
+		CapReport(ses, true, ruCaptchaKey, capid)
 	} else {
-		capReport(ses, true, ruCaptchaKey, capid)
+		CapReport(ses, true, ruCaptchaKey, capid)
 		goto register
 	}
 
