@@ -155,7 +155,7 @@ func GoLog(args ...interface{}) {
 		string_ += fmt.Sprintf("%v", element) + " "
 	}
 	timeString := time.Now().String()[:19]
-	fmt.Println(fmt.Sprintf("[%v]", timeString)+":", string_)
+	fmt.Println(fmt.Sprintf("[%v]", timeString)+":", string_) //aaa
 }
 
 func (logger Logger) Debug(data ...interface{}) {
