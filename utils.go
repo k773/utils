@@ -160,19 +160,31 @@ func GoLog(args ...interface{}) {
 
 func (logger Logger) Debug(data ...interface{}) {
 	if logger.LogLevel >= LevelDebug {
-		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "DEBUG"), data)
+		var string_ string
+		for _, element := range data {
+			string_ += fmt.Sprintf("%v", element) + " "
+		}
+		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "DEBUG"), string_)
 	}
 }
 
 func (logger Logger) Error(data ...interface{}) {
 	if logger.LogLevel >= LevelError {
-		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "ERROR"), data)
+		var string_ string
+		for _, element := range data {
+			string_ += fmt.Sprintf("%v", element) + " "
+		}
+		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "ERROR"), string_)
 	}
 }
 
 func (logger Logger) Info(data ...interface{}) {
 	if logger.LogLevel >= LevelInfo {
-		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "INFO"), data)
+		var string_ string
+		for _, element := range data {
+			string_ += fmt.Sprintf("%v", element) + " "
+		}
+		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "INFO"), string_)
 	}
 }
 
