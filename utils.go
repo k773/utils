@@ -412,22 +412,16 @@ func FindAllGroups(text string, reg string) [][]string {
 	return temp4
 }
 
-func GetServerPlayers(ip string) []string {
+func GetServerPlayers(ip string) (bool, []string) {
 	req := query.NewRequest()
 	_ = req.Connect(ip)
 	response, _ := req.Full()
 
-	if response == nil {
-		///fmt.Println("Error", ip, err)
-		return []string{}
+	if response == nil { //Cant connect to server
+		return false, nil
 	}
 
-	var playersArray []string
-	for _, player := range response.Players {
-		//fmt.Println(i)
-		playersArray = append(playersArray, player)
-	}
-	return playersArray
+	return len(response.Players) > 0, response.Players
 }
 
 func BytesToBool(bytes []byte) bool {
