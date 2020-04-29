@@ -334,7 +334,7 @@ func EncryptBtB64(strkey string, data []byte) string {
 func EncryptBtB64_safe(strkey string, data []byte) string {
 	iv := make([]byte, 16)
 	rand.Read(iv)
-	return EncryptBtB64_safe(strkey, append(iv, data...))
+	return EncryptBtB64(strkey, append(iv, data...))
 }
 
 func Sha256StH(text string) string {
