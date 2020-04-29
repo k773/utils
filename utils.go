@@ -315,6 +315,10 @@ func DecryptB64tB(strkey, b64 string) []byte {
 	return Decrypt(H2b(strkey), ciphertext[aes.BlockSize:], ciphertext[:aes.BlockSize])
 }
 
+func DecryptB64tB_safe(strkey, b64 string) []byte {
+	return DecryptB64tB(strkey, b64)[16:]
+}
+
 func EncryptBtB(strkey string, data []byte) []byte {
 	return Encrypt(H2b(strkey), data)
 }
@@ -325,6 +329,14 @@ func EncryptBtH(strkey string, data []byte) string {
 
 func EncryptBtB64(strkey string, data []byte) string {
 	return base64.StdEncoding.EncodeToString(Encrypt(H2b(strkey), data))
+}
+
+func EncryptBtB64_safe(strkey string, data []byte) string {
+	iv := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic(err)
+	}
+	return EncryptBtB64_safe(strkey, append(iv, data...))
 }
 
 func Sha256StH(text string) string {
