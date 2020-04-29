@@ -333,9 +333,7 @@ func EncryptBtB64(strkey string, data []byte) string {
 
 func EncryptBtB64_safe(strkey string, data []byte) string {
 	iv := make([]byte, 16)
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
-	}
+	rand.Read(iv)
 	return EncryptBtB64_safe(strkey, append(iv, data...))
 }
 
