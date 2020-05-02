@@ -235,6 +235,26 @@ func (RSA) VerifySign(pubKey rsa.PublicKey, data, sign []byte) {
 	}
 }
 
+func ClearEmptyStrings(elements []string) []string {
+	var ret []string
+	for _, val := range elements {
+		if len(val) > 0 {
+			ret = append(ret, val)
+		}
+	}
+	return ret
+}
+
+func ClearEmtyElements(badExample interface{}, elements ...interface{}) []interface{} {
+	var ret []interface{}
+	for _, element := range elements {
+		if element != badExample {
+			ret = append(ret, element)
+		}
+	}
+	return ret
+}
+
 func H(err error) {
 	if err != nil {
 		panic(err)
