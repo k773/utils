@@ -235,6 +235,10 @@ func (RSA) VerifySign(pubKey rsa.PublicKey, data, sign []byte) {
 	}
 }
 
+func UnixMs() int64 {
+	return time.Now().UnixNano() / 1000000
+}
+
 func ClearEmptyStrings(elements []string) []string {
 	var ret []string
 	for _, val := range elements {
