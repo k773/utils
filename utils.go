@@ -417,12 +417,14 @@ func ReadFiles(paths []string) []string {
 	return data
 }
 
-func FindGroup(text string, reg string) []string {
+//DEPRECATED
+func FindGroup_(text string, reg string) []string {
 	regex, _ := regexp.Compile(reg)
 	return regex.FindStringSubmatch(text)
 }
 
-func FindGroups(text string, reg string) []string {
+//DEPRECATED
+func FindGroups_(text string, reg string) []string {
 	regex, _ := regexp.Compile(reg)
 	temp := regex.FindAllStringSubmatch(text, -1)
 	var temp4 []string
@@ -432,7 +434,8 @@ func FindGroups(text string, reg string) []string {
 	return temp4
 }
 
-func FindAllGroups(text string, reg string) [][]string {
+//DEPRECATED
+func FindAllGroups_(text string, reg string) [][]string {
 	regex, _ := regexp.Compile(reg)
 	temp := regex.FindAllStringSubmatch(text, -1)
 	var temp4 [][]string
@@ -447,6 +450,15 @@ func FindAllGroups(text string, reg string) [][]string {
 		temp4 = append(temp4, temp6)
 	}
 	return temp4
+}
+
+func FindGroups(text, regex string) []string {
+	var res []string
+	var re = regexp.MustCompile(regex)
+
+	for _, match := range re.FindAllString(text, -1) {
+		res = append(res, match)
+	}
 }
 
 func GetServerPlayers(ip string) (bool, []string) {
