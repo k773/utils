@@ -459,6 +459,7 @@ func FindGroups(text, regex string) []string {
 	for _, match := range re.FindAllString(text, -1) {
 		res = append(res, match)
 	}
+	return res
 }
 
 func GetServerPlayers(ip string) (bool, []string) {
