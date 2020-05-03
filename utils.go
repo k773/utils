@@ -627,6 +627,7 @@ func CapReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
 //	return s, nil
 //}
 
+//DEPRECATED
 func (ScUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
 	// Returns login string, password string, csrf string
 	const siteKey = "6LeedroUAAAAAK2RUkaNLVBYraeQXNVHX45O227A"
@@ -637,7 +638,7 @@ func (ScUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (
 register:
 	resp, page, _ := ses.Get(pageUrl).End()
 
-	csrf := FindGroup(page, regexToken)[1]
+	csrf := FindGroup_(page, regexToken)[1]
 
 	xsrf := (*http.Response)(resp).Cookies()[1].Value
 	//os.Exit(111)
@@ -675,6 +676,7 @@ register:
 	return login, password, csrf
 }
 
+//DEPRECATED
 func (ScUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
 	//Set user reputation
 	const pageUrl = "https://streamcraft.net/forum/user/reputation"
@@ -688,16 +690,18 @@ func (ScUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int,
 	ses.Post(pageUrl).Send(string(JsonB)).End()
 }
 
+//DEPRECATED
 func (ScUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
 	//Get user id
 	const pageUrl = "https://streamcraft.net/user/"
 	const regexUserId = `<i class="fa fa-thumbs-down cursor-pointer" onclick="App\.sendRequest\('/forum/user/reputation', {user: (?P<id>.*), reputation: -1}\);"></i>`
 
 	_, page, _ := ses.Get(pageUrl + nickname).End()
-	id, _ := strconv.Atoi(FindGroup(page, regexUserId)[1])
+	id, _ := strconv.Atoi(FindGroup_(page, regexUserId)[1])
 	return id
 }
 
+//DEPRECATED
 func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	const regexThreads = `<a href="/forum/category/(?P<id>.*)"><i class="fa fa-level-down">`
 	const regexThreadsIds = `<a class="btn btn-primary btn-shadow float-right" href="/forum/discussion/create/(?P<id>.*)" role="button">`
@@ -709,7 +713,7 @@ func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	var threadsIds []string
 	for _, thread := range temp {
 		_, temp2, _ := ses.Get(CategoryUrl + thread).End()
-		temp3 := FindGroup(temp2, regexThreadsIds)
+		temp3 := FindGroup_(temp2, regexThreadsIds)
 		if len(temp3) < 2 {
 			continue
 		}
