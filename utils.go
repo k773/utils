@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
@@ -415,6 +416,23 @@ func ReadFiles(paths []string) []string {
 		data = append(data, ReadFile(path))
 	}
 	return data
+}
+
+func ReadFileByLines(path string) (error, []string) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0)
+	if err != nil { //If error occupied while reading file
+		return err, nil
+	}
+
+	var ret []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		ret = append(ret, scanner.Text())
+	}
+
+	_ = file.Close() //Closing file finally
+
+	return nil, ret
 }
 
 //DEPRECATED
