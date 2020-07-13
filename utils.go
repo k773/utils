@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
@@ -189,23 +190,39 @@ func (logger Logger) Info(data ...interface{}) {
 	}
 }
 
-func (RSA) ExportKey(key rsa.PublicKey) []byte {
-	bytes1 := x509.MarshalPKCS1PublicKey(&key)
-	var pemKey = &pem.Block{
+func (RSA) ExportPublicKey(key *rsa.PublicKey) []byte {
+	keyBytes := x509.MarshalPKCS1PublicKey(key)
+	return pem.EncodeToMemory(&pem.Block{
 		Type:  "PUBLIC KEY",
-		Bytes: bytes1,
-	}
-	return pem.EncodeToMemory(pemKey)
+		Bytes: keyBytes,
+	})
 }
 
-func (RSA) ImportKey(key string) rsa.PublicKey {
-	data, _ := pem.Decode([]byte(key))
-	serverPubKey, err := x509.ParsePKCS1PublicKey(data.Bytes)
-	if err != nil {
-		GoLog("Error while importing key:", err)
+func (RSA) ImportPublicKey(key []byte) (*rsa.PublicKey, error) {
+	publicKeyBlock, _ := pem.Decode(key)
+	if publicKeyBlock == nil {
+		return nil, errors.New("public key's decoded block is null")
 	}
-	H(err)
-	return *serverPubKey
+	return x509.ParsePKCS1PublicKey(publicKeyBlock.Bytes)
+}
+
+func (RSA) ExportPrivateKey(key *rsa.PrivateKey) []byte {
+	keyBytes := x509.MarshalPKCS1PrivateKey(key)
+	return pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: keyBytes,
+		},
+	)
+}
+
+func (RSA) ImportPrivateKey(key []byte) (*rsa.PrivateKey, error) {
+	privateKeyBlock, _ := pem.Decode(key)
+	if privateKeyBlock == nil {
+		return nil, errors.New("private key's PEM decoded block is null")
+	}
+
+	return x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
 }
 
 func (RSA) EncryptRsa(key rsa.PublicKey, message []byte) []byte {
