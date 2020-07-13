@@ -552,16 +552,22 @@ func ContainsString(s []string, e string) bool {
 	return false
 }
 
-func Md5(data string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(data))
-	return hex.EncodeToString(hasher.Sum(nil))
+func Md5S2S(data string) string {
+	h := md5.New()
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
-func Md5b(data []byte) string {
-	hasher := md5.New()
-	hasher.Write(data)
-	return hex.EncodeToString(hasher.Sum(nil))
+func Md5B2S(data []byte) string {
+	h := md5.New()
+	h.Write(data)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func Md5B2B(data []byte) []byte {
+	h := md5.New()
+	h.Write(data)
+	return h.Sum(nil)
 }
 
 func (SliceTools) GetIntIndex(slice []int, element int) int {
