@@ -380,6 +380,10 @@ func Sha256BtB(data []byte) []byte {
 	return h.Sum(nil)
 }
 
+func Sha256B2H(data []byte) string {
+	return hex.EncodeToString(Sha256BtB(data))
+}
+
 func Sha256File(path string) string {
 	f, err := os.Open(path)
 	if err != nil {
@@ -558,7 +562,7 @@ func Md5S2S(data string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func Md5B2S(data []byte) string {
+func Md5B2H(data []byte) string {
 	h := md5.New()
 	h.Write(data)
 	return hex.EncodeToString(h.Sum(nil))
