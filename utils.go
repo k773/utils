@@ -370,18 +370,22 @@ func EncryptBtB64_safe(strkey string, data []byte) string {
 	return EncryptBtB64(strkey, append(iv, data...))
 }
 
-func Sha256StH(text string) string {
-	return hex.EncodeToString(Sha256BtB([]byte(text)))
-}
-
-func Sha256BtB(data []byte) []byte {
+func Sha256B2B(data []byte) []byte {
 	h := sha256.New()
 	h.Write(data)
 	return h.Sum(nil)
 }
 
+func Sha256S2B(text string) []byte {
+	return Sha256B2B([]byte(text))
+}
+
 func Sha256B2H(data []byte) string {
-	return hex.EncodeToString(Sha256BtB(data))
+	return hex.EncodeToString(Sha256B2B(data))
+}
+
+func Sha256S2H(text string) string {
+	return hex.EncodeToString(Sha256B2B([]byte(text)))
 }
 
 func Sha256File(path string) string {
