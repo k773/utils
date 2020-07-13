@@ -225,32 +225,23 @@ func (RSA) ImportPrivateKey(key []byte) (*rsa.PrivateKey, error) {
 	return x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
 }
 
-func (RSA) EncryptRsa(key rsa.PublicKey, message []byte) []byte {
-	encrypted, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &key, message, []byte(""))
-	H(err)
-	return encrypted
+func (RSA) EncryptRsa(key *rsa.PublicKey, message []byte) ([]byte, error) {
+	return rsa.EncryptOAEP(sha256.New(), rand.Reader, key, message, []byte(""))
 }
 
-func (RSA) DecryptRsa(key rsa.PrivateKey, message []byte) []byte {
-	decrypted, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, &key, message, []byte(""))
-	H(err)
-	return decrypted
+func (RSA) DecryptRsa(key *rsa.PrivateKey, message []byte) ([]byte, error) {
+	return rsa.DecryptOAEP(sha256.New(), rand.Reader, key, message, []byte(""))
 }
 
-func (RSA) SignRsa(key rsa.PrivateKey, data []byte) []byte {
+func (RSA) SignRsa(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 	var opts rsa.PSSOptions
 	opts.SaltLength = rsa.PSSSaltLengthAuto
-	res, err := rsa.SignPSS(rand.Reader, &key, crypto.SHA256, Sha256BtB(data), &opts)
-	H(err)
-	return res
+	return rsa.SignPSS(rand.Reader, key, crypto.SHA256, Sha256BtB(data), &opts)
 }
 
-func (RSA) VerifySign(pubKey rsa.PublicKey, data, sign []byte) {
+func (RSA) VerifySign(pubKey *rsa.PublicKey, data, sign []byte) bool {
 	var opts rsa.PSSOptions = rsa.PSSOptions{SaltLength: 20}
-	err := rsa.VerifyPSS(&pubKey, crypto.SHA256, Sha256BtB(data), sign, &opts)
-	if err != nil {
-		panic(err)
-	}
+	return rsa.VerifyPSS(pubKey, crypto.SHA256, Sha256BtB(data), sign, &opts) == nil
 }
 
 func UnixMs() int64 {
