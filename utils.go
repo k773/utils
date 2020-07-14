@@ -236,12 +236,12 @@ func (RSA) DecryptRsa(key *rsa.PrivateKey, message []byte) ([]byte, error) {
 func (RSA) SignRsa(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 	var opts rsa.PSSOptions
 	opts.SaltLength = rsa.PSSSaltLengthAuto
-	return rsa.SignPSS(rand.Reader, key, crypto.SHA256, Sha256BtB(data), &opts)
+	return rsa.SignPSS(rand.Reader, key, crypto.SHA256, Sha256B2B(data), &opts)
 }
 
 func (RSA) VerifySign(pubKey *rsa.PublicKey, data, sign []byte) bool {
 	var opts rsa.PSSOptions = rsa.PSSOptions{SaltLength: 20}
-	return rsa.VerifyPSS(pubKey, crypto.SHA256, Sha256BtB(data), sign, &opts) == nil
+	return rsa.VerifyPSS(pubKey, crypto.SHA256, Sha256B2B(data), sign, &opts) == nil
 }
 
 func UnixMs() int64 {
