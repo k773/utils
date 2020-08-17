@@ -23,7 +23,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"log"
 	"strings"
-
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
 	"io"
