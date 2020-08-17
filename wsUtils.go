@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
-var upgrader = websocket.Upgrader{}
+var Upgrader = websocket.Upgrader{}
 
-type wsStruct struct {
-	s        sync.Mutex
-	conn     *websocket.Conn
-	m        map[[16]byte][][]byte //msgID:[]msg; map may be nil (do not use readMsgIDMessage() and readMessagesThread() then)
-	isOpened bool                  //Needs to be set manually
+type WsStruct struct {
+	S        sync.Mutex
+	Conn     *websocket.Conn
+	M        map[[16]byte][][]byte //msgID:[]msg; map may be nil (do not use readMsgIDMessage() and readMessagesThread() then)
+	IsOpened bool                  //Needs to be set manually
 }
 
 //DEPRECATED
-func readRawMessage(conn *websocket.Conn) ([]byte, error) {
+func ReadRawMessage(conn *websocket.Conn) ([]byte, error) {
 	_, response, err := conn.ReadMessage()
 	if err != nil {
 		_ = conn.Close()
@@ -26,7 +26,7 @@ func readRawMessage(conn *websocket.Conn) ([]byte, error) {
 }
 
 //DEPRECATED
-func writeRawMessage(conn *websocket.Conn, data []byte) error {
+func WriteRawMessage(conn *websocket.Conn, data []byte) error {
 	err := conn.WriteMessage(websocket.BinaryMessage, data)
 	if err != nil {
 		_ = conn.Close()
@@ -35,8 +35,8 @@ func writeRawMessage(conn *websocket.Conn, data []byte) error {
 	return nil
 }
 
-func (ws *wsStruct) readWsMessage() ([16]byte, []byte, error) { //Returns msgId, msg, err
-	_, response, err := ws.conn.ReadMessage()
+func (ws *WsStruct) ReadWsMessage() ([16]byte, []byte, error) { //Returns msgId, msg, err
+	_, response, err := ws.Conn.ReadMessage()
 	if err != nil {
 		return [16]byte{}, nil, err
 	}
@@ -51,19 +51,19 @@ func (ws *wsStruct) readWsMessage() ([16]byte, []byte, error) { //Returns msgId,
 	return msgID, response[16:], nil
 }
 
-func (ws *wsStruct) readMsgIDMessage(msgID [16]byte) ([]byte, error) {
+func (ws *WsStruct) ReadMsgIDMessage(msgID [16]byte) ([]byte, error) {
 	//fmt.Println(msgID)
 	for {
-		ws.s.Lock()
-		if value, has := ws.m[msgID]; has && len(ws.m[msgID]) > 0 {
+		ws.S.Lock()
+		if value, has := ws.M[msgID]; has && len(ws.M[msgID]) > 0 {
 			//Removing received data from the map
 
-			ws.m[msgID] = ws.m[msgID][1:]
-			ws.s.Unlock()
+			ws.M[msgID] = ws.M[msgID][1:]
+			ws.S.Unlock()
 			return value[0], nil
 		}
-		ws.s.Unlock()
-		if !ws.isOpened {
+		ws.S.Unlock()
+		if !ws.IsOpened {
 			return nil, errors.New("Ws closed!")
 		}
 
@@ -71,19 +71,19 @@ func (ws *wsStruct) readMsgIDMessage(msgID [16]byte) ([]byte, error) {
 	}
 }
 
-func (ws *wsStruct) writeMessage(msgID [16]byte, msg []byte) error {
-	return ws.conn.WriteMessage(websocket.BinaryMessage, append(msgID[:], msg...))
+func (ws *WsStruct) WriteMessage(msgID [16]byte, msg []byte) error {
+	return ws.Conn.WriteMessage(websocket.BinaryMessage, append(msgID[:], msg...))
 }
 
-func (ws *wsStruct) readMessagesThread() error {
+func (ws *WsStruct) ReadMessagesThread() error {
 	for {
-		msgID, msg, err := ws.readWsMessage()
+		msgID, msg, err := ws.ReadWsMessage()
 		if err != nil {
 			return err
 		}
 
-		ws.s.Lock()
-		ws.m[msgID] = append((ws.m)[msgID], msg)
-		ws.s.Unlock()
+		ws.S.Lock()
+		ws.M[msgID] = append((ws.M)[msgID], msg)
+		ws.S.Unlock()
 	}
 }
