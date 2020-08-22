@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/k773/utils"
 	"io"
 	"log"
 	"strconv"
@@ -57,11 +56,11 @@ func EncryptBtB(hexKey string, data []byte) []byte {
 func EncryptBtBSafe(aesKey string, data []byte) []byte {
 	randomBytes := make([]byte, 16)
 	_, _ = rand.Read(randomBytes)
-	return utils.EncryptBtB(aesKey, append(randomBytes, data...))
+	return EncryptBtB(aesKey, append(randomBytes, data...))
 }
 
 func DecryptBtBSafe(aesKey string, data []byte) []byte {
-	return utils.DecryptBtB(aesKey, data)[16:]
+	return DecryptBtB(aesKey, data)[16:]
 }
 
 func DecryptHtB(hexKey, hexData string) []byte {
