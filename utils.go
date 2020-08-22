@@ -2,27 +2,17 @@ package utils
 
 import (
 	"bufio"
-	"crypto"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/md5"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/x509"
 	"database/sql"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
-	"errors"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
-	"log"
 	"strings"
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
@@ -91,19 +81,7 @@ type captchaResponseStruct struct {
 	Request string `json:"request"`
 }
 
-const LevelError = 0
-const LevelInfo = 1
-const LevelDebug = 2
-
-type RSA struct {
-}
-
 type SliceTools struct {
-}
-
-type Logger struct {
-	LogLevel   int
-	LoggerName string
 }
 
 func SplitStringByCount(str string, maxCount int) []string {
@@ -150,99 +128,6 @@ func H2s(h string) string {
 	return ""
 }
 
-func GoLog(args ...interface{}) {
-	var string_ string
-	for _, element := range args {
-		string_ += fmt.Sprintf("%v", element) + " "
-	}
-	timeString := time.Now().String()[:19]
-	fmt.Println(fmt.Sprintf("[%v]", timeString)+":", string_) //aaa
-}
-
-func (logger Logger) Debug(data ...interface{}) {
-	if logger.LogLevel >= LevelDebug {
-		var string_ string
-		for _, element := range data {
-			string_ += fmt.Sprintf("%v", element) + " "
-		}
-		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "DEBUG"), string_)
-	}
-}
-
-func (logger Logger) Error(data ...interface{}) {
-	if logger.LogLevel >= LevelError {
-		var string_ string
-		for _, element := range data {
-			string_ += fmt.Sprintf("%v", element) + " "
-		}
-		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "ERROR"), string_)
-	}
-}
-
-func (logger Logger) Info(data ...interface{}) {
-	if logger.LogLevel >= LevelInfo {
-		var string_ string //
-		for _, element := range data {
-			string_ += fmt.Sprintf("%v", element) + " "
-		}
-		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "INFO"), string_)
-	}
-}
-
-func (RSA) ExportPublicKey(key *rsa.PublicKey) []byte {
-	keyBytes := x509.MarshalPKCS1PublicKey(key)
-	return pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: keyBytes,
-	})
-}
-
-func (RSA) ImportPublicKey(key []byte) (*rsa.PublicKey, error) {
-	publicKeyBlock, _ := pem.Decode(key)
-	if publicKeyBlock == nil {
-		return nil, errors.New("public key's decoded block is null")
-	}
-	return x509.ParsePKCS1PublicKey(publicKeyBlock.Bytes)
-}
-
-func (RSA) ExportPrivateKey(key *rsa.PrivateKey) []byte {
-	keyBytes := x509.MarshalPKCS1PrivateKey(key)
-	return pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: keyBytes,
-		},
-	)
-}
-
-func (RSA) ImportPrivateKey(key []byte) (*rsa.PrivateKey, error) {
-	privateKeyBlock, _ := pem.Decode(key)
-	if privateKeyBlock == nil {
-		return nil, errors.New("private key's PEM decoded block is null")
-	}
-
-	return x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
-}
-
-func (RSA) EncryptRsa(key *rsa.PublicKey, message []byte) ([]byte, error) {
-	return rsa.EncryptOAEP(sha256.New(), rand.Reader, key, message, []byte(""))
-}
-
-func (RSA) DecryptRsa(key *rsa.PrivateKey, message []byte) ([]byte, error) {
-	return rsa.DecryptOAEP(sha256.New(), rand.Reader, key, message, []byte(""))
-}
-
-func (RSA) SignRsa(key *rsa.PrivateKey, data []byte) ([]byte, error) {
-	var opts rsa.PSSOptions
-	opts.SaltLength = rsa.PSSSaltLengthAuto
-	return rsa.SignPSS(rand.Reader, key, crypto.SHA256, Sha256B2B(data), &opts)
-}
-
-func (RSA) VerifySign(pubKey *rsa.PublicKey, data, sign []byte) bool {
-	var opts rsa.PSSOptions = rsa.PSSOptions{SaltLength: 20}
-	return rsa.VerifyPSS(pubKey, crypto.SHA256, Sha256B2B(data), sign, &opts) == nil
-}
-
 func UnixMs() int64 {
 	return time.Now().UnixNano() / 1000000
 }
@@ -257,10 +142,10 @@ func ClearEmptyStrings(elements []string) []string {
 	return ret
 }
 
-func ClearEmtyElements(badExample interface{}, elements ...interface{}) []interface{} {
+func RemoveElements(elementToRemove interface{}, elements ...interface{}) []interface{} {
 	var ret []interface{}
 	for _, element := range elements {
-		if element != badExample {
+		if element != elementToRemove {
 			ret = append(ret, element)
 		}
 	}
@@ -291,84 +176,6 @@ func ReverseString(s string) string {
 	return string(runes)
 }
 
-func Encrypt(key, data []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	ciphertext := make([]byte, aes.BlockSize+len(data))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
-	}
-
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], data)
-
-	return ciphertext
-}
-
-func Decrypt(key, data, iv []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	if len(data) < aes.BlockSize {
-		log.Println("ciphertext too short: " + strconv.Itoa(len(data)))
-		return []byte{}
-	}
-
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(data, data)
-	return data
-}
-
-func DecryptBtB(strkey string, bytes []byte) []byte {
-	return Decrypt(H2b(strkey), bytes[aes.BlockSize:], bytes[:aes.BlockSize])
-}
-
-func DecryptHtB(strkey, hexData string) []byte {
-	data := H2b(hexData)
-	//fmt.Println(hexData, data)
-	return Decrypt(H2b(strkey), data[aes.BlockSize:], data[:aes.BlockSize])
-}
-
-func DecryptHtS(strkey, hexStr string) string {
-	ciphertext, _ := hex.DecodeString(hexStr)
-	//fmt.Println("IV:", B2h(ciphertext[:aes.BlockSize]))
-	//fmt.Println("Data:", B2h(ciphertext[aes.BlockSize:]))
-	return string(Decrypt(H2b(strkey), ciphertext[aes.BlockSize:], ciphertext[:aes.BlockSize]))
-}
-
-func DecryptB64tB(strkey, b64 string) []byte {
-	ciphertext, _ := base64.StdEncoding.DecodeString(b64)
-	return Decrypt(H2b(strkey), ciphertext[aes.BlockSize:], ciphertext[:aes.BlockSize])
-}
-
-func DecryptB64tB_safe(strkey, b64 string) []byte {
-	return DecryptB64tB(strkey, b64)[16:]
-}
-
-func EncryptBtB(strkey string, data []byte) []byte {
-	return Encrypt(H2b(strkey), data)
-}
-
-func EncryptBtH(strkey string, data []byte) string {
-	return hex.EncodeToString(Encrypt(H2b(strkey), data))
-}
-
-func EncryptBtB64(strkey string, data []byte) string {
-	return base64.StdEncoding.EncodeToString(Encrypt(H2b(strkey), data))
-}
-
-func EncryptBtB64_safe(strkey string, data []byte) string {
-	iv := make([]byte, 16)
-	rand.Read(iv)
-	return EncryptBtB64(strkey, append(iv, data...))
-}
-
 func Sha256B2B(data []byte) []byte {
 	h := sha256.New()
 	h.Write(data)
@@ -390,13 +197,13 @@ func Sha256S2H(text string) string {
 func Sha256File(path string) string {
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	defer H(f.Close())
+	defer f.Close()
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return hex.EncodeToString(h.Sum(nil))
@@ -434,7 +241,7 @@ func ReadFiles(paths []string) []string {
 }
 
 func ReadFileByLines(path string) (error, []string) {
-	file, err := os.OpenFile(path, os.O_RDONLY, 0)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0600)
 	if err != nil { //If error occupied while reading file
 		return err, nil
 	}
