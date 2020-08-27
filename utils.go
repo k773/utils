@@ -292,7 +292,7 @@ func FindAllGroups_(text string, reg string) [][]string {
 	return temp4
 }
 
-func FindGroups(text, regex string) []string {
+func FindRegexText(text, regex string) []string {
 	var res []string
 	var re = regexp.MustCompile(regex)
 
@@ -300,6 +300,24 @@ func FindGroups(text, regex string) []string {
 		res = append(res, match)
 	}
 	return res
+}
+
+func findRegexNamedGroups(data, regex string) []string {
+	var namedGroups []string
+
+	r, err := regexp.Compile(regex)
+	if err != nil {
+		return namedGroups
+	}
+
+	allStringSubmatch := r.FindAllStringSubmatch(data, -1)
+	for _, val := range allStringSubmatch {
+		if len(val) != 2 {
+			continue
+		}
+		namedGroups = append(namedGroups, val[1])
+	}
+	return namedGroups
 }
 
 func GetServerPlayers(ip string) (bool, []string) {
@@ -555,7 +573,7 @@ func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
 	const CategoryUrl = "https://streamcraft.net/forum/category/"
 
 	_, text, _ := ses.Get(ForumUrl).End()
-	temp := FindGroups(text, regexThreads)
+	temp := FindRegexText(text, regexThreads)
 	var threadsIds []string
 	for _, thread := range temp {
 		_, temp2, _ := ses.Get(CategoryUrl + thread).End()
