@@ -302,7 +302,7 @@ func FindRegexText(text, regex string) []string {
 	return res
 }
 
-func findRegexNamedGroups(data, regex string) []string {
+func FindRegexNamedGroups(data, regex string) []string {
 	var namedGroups []string
 
 	r, err := regexp.Compile(regex)
