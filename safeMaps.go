@@ -3,69 +3,69 @@ package utils
 import "sync"
 
 type SafeByteInt64MapStruct struct {
-	m map[byte]int64
-	s sync.Mutex
+	M map[byte]int64
+	S sync.Mutex
 }
 type SafeByteIntMapStruct struct {
-	m map[byte]int
-	s sync.Mutex
+	M map[byte]int
+	S sync.Mutex
 }
 type SafeByteBoolMapStruct struct {
-	m map[byte]bool
-	s sync.Mutex
+	M map[byte]bool
+	S sync.Mutex
 }
 type SafeByteStringMapStruct struct {
-	m map[byte]string
-	s sync.Mutex
+	M map[byte]string
+	S sync.Mutex
 }
 
 type SafeStringInt64MapStruct struct {
-	m map[string]int64
-	s sync.Mutex
+	M map[string]int64
+	S sync.Mutex
 }
 type SafeStringIntMapStruct struct {
-	m map[string]int
-	s sync.Mutex
+	M map[string]int
+	S sync.Mutex
 }
 type SafeStringBoolMapStruct struct {
-	m map[string]bool
-	s sync.Mutex
+	M map[string]bool
+	S sync.Mutex
 }
 type SafeStringStringMapStruct struct {
-	m map[string]string
-	s sync.Mutex
+	M map[string]string
+	S sync.Mutex
 }
 
 type SafeIntInt64MapStruct struct {
-	m map[int]int64
-	s sync.Mutex
+	M map[int]int64
+	S sync.Mutex
 }
 type SafeIntIntMapStruct struct {
-	m map[int]int
-	s sync.Mutex
+	M map[int]int
+	S sync.Mutex
 }
 type SafeIntBoolMapStruct struct {
-	m map[int]bool
-	s sync.Mutex
+	M map[int]bool
+	S sync.Mutex
 }
 type SafeIntStringMapStruct struct {
-	m map[int]string
-	s sync.Mutex
+	M map[int]string
+	S sync.Mutex
 }
 
 type SafeInt64Int64MapStruct struct {
-	m map[int64]int64
-	s sync.Mutex
+	M map[int64]int64
+	S sync.Mutex
 }
 type SafeInt64IntMapStruct struct {
-	m map[int64]int
-	s sync.Mutex
+	M map[int64]int
+	S sync.Mutex
 }
 type SafeInt64BoolMapStruct struct {
-	m map[int64]bool
-	s sync.Mutex
+	M map[int64]bool
+	S sync.Mutex
 }
 type SafeInt64StringMapStruct struct {
-	m map[int64]string
-	s sync.Mutex
+	M map[int64]string
+	S sync.Mutex
 }
