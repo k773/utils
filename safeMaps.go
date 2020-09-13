@@ -2,70 +2,70 @@ package utils
 
 import "sync"
 
-type safeByteInt64MapStruct struct {
+type SafeByteInt64MapStruct struct {
 	m map[byte]int64
 	s sync.Mutex
 }
-type safeByteIntMapStruct struct {
+type SafeByteIntMapStruct struct {
 	m map[byte]int
 	s sync.Mutex
 }
-type safeByteBoolMapStruct struct {
+type SafeByteBoolMapStruct struct {
 	m map[byte]bool
 	s sync.Mutex
 }
-type safeByteStringMapStruct struct {
+type SafeByteStringMapStruct struct {
 	m map[byte]string
 	s sync.Mutex
 }
 
-type safeStringInt64MapStruct struct {
+type SafeStringInt64MapStruct struct {
 	m map[string]int64
 	s sync.Mutex
 }
-type safeStringIntMapStruct struct {
+type SafeStringIntMapStruct struct {
 	m map[string]int
 	s sync.Mutex
 }
-type safeStringBoolMapStruct struct {
+type SafeStringBoolMapStruct struct {
 	m map[string]bool
 	s sync.Mutex
 }
-type safeStringStringMapStruct struct {
+type SafeStringStringMapStruct struct {
 	m map[string]string
 	s sync.Mutex
 }
 
-type safeIntInt64MapStruct struct {
+type SafeIntInt64MapStruct struct {
 	m map[int]int64
 	s sync.Mutex
 }
-type safeIntIntMapStruct struct {
+type SafeIntIntMapStruct struct {
 	m map[int]int
 	s sync.Mutex
 }
-type safeIntBoolMapStruct struct {
+type SafeIntBoolMapStruct struct {
 	m map[int]bool
 	s sync.Mutex
 }
-type safeIntStringMapStruct struct {
+type SafeIntStringMapStruct struct {
 	m map[int]string
 	s sync.Mutex
 }
 
-type safeInt64Int64MapStruct struct {
+type SafeInt64Int64MapStruct struct {
 	m map[int64]int64
 	s sync.Mutex
 }
-type safeInt64IntMapStruct struct {
+type SafeInt64IntMapStruct struct {
 	m map[int64]int
 	s sync.Mutex
 }
-type safeInt64BoolMapStruct struct {
+type SafeInt64BoolMapStruct struct {
 	m map[int64]bool
 	s sync.Mutex
 }
-type safeInt64StringMapStruct struct {
+type SafeInt64StringMapStruct struct {
 	m map[int64]string
 	s sync.Mutex
 }
