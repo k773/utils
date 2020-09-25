@@ -69,3 +69,20 @@ type SafeInt64StringMapStruct struct {
 	M map[int64]string
 	S sync.Mutex
 }
+
+type SafeCounter struct {
+	Value int
+	s     sync.Mutex
+}
+
+func (c *SafeCounter) Increase() {
+	c.s.Lock()
+	c.Value++
+	c.s.Unlock()
+}
+
+func (c *SafeCounter) Decrease() {
+	c.s.Lock()
+	c.Value++
+	c.s.Unlock()
+}
