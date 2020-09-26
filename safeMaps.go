@@ -83,6 +83,6 @@ func (c *SafeCounter) Increase() {
 
 func (c *SafeCounter) Decrease() {
 	c.s.Lock()
-	c.Value++
+	c.Value--
 	c.s.Unlock()
 }
