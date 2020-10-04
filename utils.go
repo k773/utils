@@ -84,6 +84,13 @@ type captchaResponseStruct struct {
 type SliceTools struct {
 }
 
+func B64StringFix(s string) string {
+	if i := len(s) % 4; i != 0 {
+		s += strings.Repeat("=", 4-i)
+	}
+	return s
+}
+
 func SplitStringByCount(str string, maxCount int) []string {
 	var ret []string
 	for i := 0; true; i += maxCount {
