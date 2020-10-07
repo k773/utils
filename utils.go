@@ -84,6 +84,20 @@ type captchaResponseStruct struct {
 type SliceTools struct {
 }
 
+func AbsInt(a int) int {
+	if a >= 0 {
+		return a
+	}
+	return -a
+}
+
+func AbsInt64(a int64) int64 {
+	if a >= 0 {
+		return a
+	}
+	return -a
+}
+
 func B64StringFix(s string) string {
 	if i := len(s) % 4; i != 0 {
 		s += strings.Repeat("=", 4-i)
