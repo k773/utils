@@ -13,7 +13,7 @@ type WsStruct struct {
 	S        sync.Mutex
 	Conn     *websocket.Conn
 	M        map[[16]byte][][]byte //msgID:[]msg; map may be nil (do not use readMsgIDMessage() and readMessagesThread() then)
-	IsOpened bool                  //Needs to be set manually
+	IsOpened bool                  //Needs to be set manually_
 }
 
 //DEPRECATED
