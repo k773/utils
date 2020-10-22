@@ -297,6 +297,11 @@ func FindGroups_(text string, reg string) []string {
 
 //DEPRECATED
 func FindAllGroups_(text string, reg string) [][]string {
+	return FindListOfGroups(text, reg)
+}
+
+func FindListOfGroups(text string, reg string) [][]string {
+	//Returns data: [[field1.1, field1.2...], [field2.1, field2.2...], ...]
 	regex, _ := regexp.Compile(reg)
 	temp := regex.FindAllStringSubmatch(text, -1)
 	var temp4 [][]string
