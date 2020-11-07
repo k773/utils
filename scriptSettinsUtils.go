@@ -32,6 +32,7 @@ func (sm *SettingsManager) SaveAsJson() (err error) {
 	buffer := &bytes.Buffer{}
 	encoder := json.NewEncoder(buffer)
 	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
 
 	if err = encoder.Encode(sm.Settings); err == nil {
 		err = ioutil.WriteFile(sm.SettingsFilePath, buffer.Bytes(), 0600)
