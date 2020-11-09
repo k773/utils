@@ -754,7 +754,6 @@ func fromHexChar(c byte) (byte, bool) {
 }
 
 func AreStringArraysEqual(a, b []string) bool {
-
 	// If one is nil, the other must also be nil.
 	if (a == nil) != (b == nil) {
 		return false
