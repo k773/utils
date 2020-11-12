@@ -11,6 +11,7 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
+	"github.com/k773/utils"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
 	"strings"
@@ -753,7 +754,7 @@ func fromHexChar(c byte) (byte, bool) {
 	return 0, false
 }
 
-func AreStringArraysEqual(a, b []string) bool {
+func AreStringArraysEqual(a, b []string, orderIsImportant bool) bool {
 	// If one is nil, the other must also be nil.
 	if (a == nil) != (b == nil) {
 		return false
@@ -763,9 +764,17 @@ func AreStringArraysEqual(a, b []string) bool {
 		return false
 	}
 
-	for i := range a {
-		if a[i] != b[i] {
-			return false
+	if orderIsImportant {
+		for i := range a {
+			if a[i] != b[i] {
+				return false
+			}
+		}
+	} else {
+		for _, item := range a {
+			if !utils.ContainsString(b, item) {
+				return false
+			}
 		}
 	}
 
