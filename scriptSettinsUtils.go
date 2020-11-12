@@ -46,6 +46,7 @@ func (sm *SettingsManager) LoadAsXml() (err error) {
 	if fileData, err = ioutil.ReadFile(sm.SettingsFilePath); err == nil {
 		err = xml.Unmarshal(fileData, &sm.Settings)
 	}
+
 	return err
 }
 
