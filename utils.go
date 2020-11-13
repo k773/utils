@@ -12,7 +12,6 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
-	"github.com/k773/utils"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
 	"strings"
@@ -773,7 +772,7 @@ func AreStringArraysEqual(a, b []string, orderIsImportant bool) bool {
 		}
 	} else {
 		for _, item := range a {
-			if !utils.ContainsString(b, item) {
+			if !ContainsString(b, item) {
 				return false
 			}
 		}
