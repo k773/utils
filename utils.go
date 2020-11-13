@@ -12,6 +12,7 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
+	"github.com/k773/utils"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
 	"strings"
@@ -784,17 +785,17 @@ func AreStringArraysEqual(a, b []string, orderIsImportant bool) bool {
 func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDelay int64, noProxyIp, proxyIp string, e error) {
 	var r gorequest.Response
 
-	t := utils.UnixMs()
+	t := UnixMs()
 	r, noProxyIp, _ = sesNoProxy.Get("https://api64.ipify.org?format=plaintext").End()
-	myPing := utils.UnixMs() - t
+	myPing := UnixMs() - t
 	if r == nil {
 		e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
 	} else {
 		_ = r.Body.Close()
 
-		t2 := utils.UnixMs()
+		t2 := UnixMs()
 		r, proxyIp, _ = sesProxy.Get("https://api64.ipify.org?format=plaintext").End()
-		proxyDelay = utils.UnixMs() - t2 - myPing
+		proxyDelay = UnixMs() - t2 - myPing
 		if r == nil {
 			e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
 		} else {
