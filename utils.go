@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
@@ -779,6 +780,34 @@ func AreStringArraysEqual(a, b []string, orderIsImportant bool) bool {
 	}
 
 	return true
+}
+
+func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDelay int64, noProxyIp, proxyIp string, e error) {
+	var r gorequest.Response
+
+	t := utils.UnixMs()
+	r, noProxyIp, _ = sesNoProxy.Get("https://api64.ipify.org?format=plaintext").End()
+	myPing := utils.UnixMs() - t
+	if r == nil {
+		e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
+	} else {
+		_ = r.Body.Close()
+
+		t2 := utils.UnixMs()
+		r, proxyIp, _ = sesProxy.Get("https://api64.ipify.org?format=plaintext").End()
+		proxyDelay = utils.UnixMs() - t2 - myPing
+		if r == nil {
+			e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
+		} else {
+			_ = r.Body.Close()
+
+			if proxyIp == noProxyIp {
+				e = errors.New("verifyProxyConnection: proxied ip response is equal to non-proxy ip response (" + noProxyIp + ")")
+			}
+		}
+	}
+
+	return proxyDelay, noProxyIp, proxyIp, e
 }
 
 //
