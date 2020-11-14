@@ -809,6 +809,18 @@ func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDel
 	return proxyDelay, noProxyIp, proxyIp, e
 }
 
+func GetGoogleDriveDocumentContent(ses *gorequest.SuperAgent, docID string) (string, error) {
+	url := fmt.Sprintf("https://drive.google.com/uc?id=%v&export=download", docID)
+	resp, data, _ := ses.Get(url).End()
+	if resp == nil {
+		return data, errors.New("nil response")
+	}
+	if resp.StatusCode != 200 {
+		return data, errors.New("wrong response code received: " + strconv.Itoa(resp.StatusCode))
+	}
+	return data, nil
+}
+
 //
 //func U(something string) uintptr {
 //	return uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(something)))
