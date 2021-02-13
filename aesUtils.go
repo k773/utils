@@ -7,8 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"io"
-	"log"
-	"strconv"
 )
 
 func Encrypt(key, data []byte) []byte {
@@ -33,11 +31,6 @@ func Decrypt(key, data, iv []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
-	}
-
-	if len(data) < aes.BlockSize {
-		log.Println("cipherText too short: " + strconv.Itoa(len(data)))
-		return []byte{}
 	}
 
 	stream := cipher.NewCFBDecrypter(block, iv)
