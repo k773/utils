@@ -17,7 +17,7 @@ type ConnTools struct {
 		M      map[byte][][]byte
 		Notify *sync.Cond
 	}
-	Logger log.Logger
+	Logger *log.Logger
 }
 
 var (
