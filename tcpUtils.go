@@ -11,13 +11,13 @@ import (
 )
 
 type ConnTools struct {
-	conn     net.Conn
-	isOpened bool
-	buf      struct {
-		m      map[byte][][]byte
-		notify *sync.Cond
+	Conn     net.Conn
+	IsOpened bool
+	Buf      struct {
+		M      map[byte][][]byte
+		Notify *sync.Cond
 	}
-	logger log.Logger
+	Logger log.Logger
 }
 
 var (
@@ -29,28 +29,28 @@ var (
 func (c *ConnTools) SendMessage(msgID byte, data []byte) error {
 	var bl = make([]byte, 4)
 	binary.LittleEndian.PutUint32(bl, uint32(len(data)+1))
-	_, err := c.conn.Write(append(bl, append([]byte{msgID}, data...)...))
+	_, err := c.Conn.Write(append(bl, append([]byte{msgID}, data...)...))
 	return err
 }
 
 func (c *ConnTools) StartMonitoring() error {
-	c.buf.m = make(map[byte][][]byte)
-	c.buf.notify = sync.NewCond(&sync.Mutex{})
-	defer c.buf.notify.Broadcast()
+	c.Buf.M = make(map[byte][][]byte)
+	c.Buf.Notify = sync.NewCond(&sync.Mutex{})
+	defer c.Buf.Notify.Broadcast()
 
 	for range time.NewTicker(10 * time.Millisecond).C {
 		msgID, data, err := c.ReadMessageFromConnection()
-		if !c.isOpened {
+		if !c.IsOpened {
 			return ConnErrorConnectionClosed
 		}
 		if err != nil && err.Error() == "EOF" {
 			c.Close("error while reading: EOF")
 			return ConnErrorEOF
 		} else if len(data) != 0 {
-			c.buf.notify.L.Lock()
-			c.buf.m[msgID] = append(c.buf.m[msgID], data)
-			c.buf.notify.Broadcast()
-			c.buf.notify.L.Unlock()
+			c.Buf.Notify.L.Lock()
+			c.Buf.M[msgID] = append(c.Buf.M[msgID], data)
+			c.Buf.Notify.Broadcast()
+			c.Buf.Notify.L.Unlock()
 		}
 	}
 	return nil
@@ -59,22 +59,22 @@ func (c *ConnTools) StartMonitoring() error {
 func (c *ConnTools) ReadMessageFromBuffer(msgID byte) ([]byte, error) {
 	var data []byte
 
-	c.buf.notify.L.Lock()
-	defer c.buf.notify.L.Unlock()
+	c.Buf.Notify.L.Lock()
+	defer c.Buf.Notify.L.Unlock()
 	for {
-		if c.buf.m == nil || !c.isOpened {
+		if c.Buf.M == nil || !c.IsOpened {
 			return nil, ConnErrorBufferIsNotInitializedOrConnectionIsClosed
 		}
 
-		if c.buf.m[msgID] != nil && len(c.buf.m[msgID]) != 0 {
-			data = c.buf.m[msgID][0]
-			c.buf.m[msgID] = c.buf.m[msgID][1:]
+		if c.Buf.M[msgID] != nil && len(c.Buf.M[msgID]) != 0 {
+			data = c.Buf.M[msgID][0]
+			c.Buf.M[msgID] = c.Buf.M[msgID][1:]
 		}
 
 		if len(data) != 0 {
 			break
 		}
-		c.buf.notify.Wait()
+		c.Buf.Notify.Wait()
 	}
 
 	return data, nil
@@ -88,13 +88,13 @@ func (c *ConnTools) ReadMessageFromConnection() (byte, []byte, error) {
 	var msgID byte
 	var res bytes.Buffer
 
-	if _, err = c.conn.Read(msgLengthB); err == nil {
+	if _, err = c.Conn.Read(msgLengthB); err == nil {
 		msgLength := int64(binary.LittleEndian.Uint32(msgLengthB))
 
 		var buf = make([]byte, 1024)
 	receive:
 		var r int
-		r, err = c.conn.Read(buf)
+		r, err = c.Conn.Read(buf)
 		read += int64(r)
 		res.Write(buf[:r])
 		if read < msgLength && err == nil {
@@ -110,7 +110,7 @@ func (c *ConnTools) ReadMessageFromConnection() (byte, []byte, error) {
 }
 
 func (c *ConnTools) Close(reason string) {
-	_ = c.conn.Close()
-	c.isOpened = false
-	c.logger.Println(c.conn.RemoteAddr().String(), "closed:", reason)
+	_ = c.Conn.Close()
+	c.IsOpened = false
+	c.Logger.Println(c.Conn.RemoteAddr().String(), "closed:", reason)
 }
