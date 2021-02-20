@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Pallinder/go-randomdata"
 	"github.com/SilverCory/golang_discord_rpc"
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/parnurzeal/gorequest"
@@ -19,7 +18,6 @@ import (
 	"golang.org/x/text/encoding/charmap"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -75,11 +73,6 @@ type reputationJson struct {
 	User       int    `json:"user"`
 	Reputation int    `json:"reputation"`
 	Token      string `json:"_token"`
-}
-
-type captchaResponseStruct struct {
-	Status  int    `json:"status"`
-	Request string `json:"request"`
 }
 
 type SliceTools struct {
@@ -444,66 +437,6 @@ func DecodeWindows1251(ba []uint8) []uint8 {
 	return out
 }
 
-func CapSolveV3(ses *gorequest.SuperAgent, url, action, key, apikey string) (string, string) {
-begin:
-	gurl := "https://rucaptcha.com/in.php?key=%s&method=userrecaptcha&version=v3&action=%s&min_score=0.9&" +
-		"googlekey=%s&pageurl=%s&json=1"
-	gurl = fmt.Sprintf(gurl, apikey, action, key, url)
-	_, response, _ := ses.Get(gurl).EndBytes()
-	var capchaResponse1 captchaResponseStruct
-	_ = json.Unmarshal(response, &capchaResponse1)
-	if capchaResponse1.Status != 1 {
-		os.Exit(-10)
-	}
-	var capchaResponse2 captchaResponseStruct
-	for capchaResponse2.Request == "" || capchaResponse2.Request == "CAPCHA_NOT_READY" {
-		_, capchaResponse2B, _ := ses.Get(fmt.Sprintf("https://rucaptcha.com/res.php?key=%s&action=get&taskinfo=0&json=1&id=%s", apikey, capchaResponse1.Request)).EndBytes()
-		_ = json.Unmarshal(capchaResponse2B, &capchaResponse2)
-		time.Sleep(2000 * time.Millisecond)
-	}
-	if capchaResponse2.Request == "ERROR_CAPTCHA_UNSOLVABLE" {
-		goto begin
-	}
-	return capchaResponse2.Request, capchaResponse1.Request
-}
-
-func CapSolveV2(ses *gorequest.SuperAgent, url, key, apiKey string) (string, string) { //returns cap-response, cap-id
-startCaptcha:
-	gurl := "https://rucaptcha.com/in.php?key=%s&method=userrecaptcha&version=v2&" +
-		"googlekey=%s&pageurl=%s&json=1"
-	gurl = fmt.Sprintf(gurl, apiKey, key, url)
-	_, response, _ := ses.Get(gurl).EndBytes()
-	var captchaResponse1 captchaResponseStruct
-	_ = json.Unmarshal(response, &captchaResponse1)
-	if captchaResponse1.Status != 1 {
-		goto startCaptcha
-	}
-
-	var capchaResponse2 captchaResponseStruct
-waitForCaptcha:
-	switch capchaResponse2.Request {
-	case "CAPCHA_NOT_READY", "":
-		_, capchaResponse2B, _ := ses.Get(fmt.Sprintf("https://rucaptcha.com/res.php?key=%s&action=get&taskinfo=0&json=1&id=%s", apiKey, captchaResponse1.Request)).EndBytes()
-		_ = json.Unmarshal(capchaResponse2B, &capchaResponse2)
-		time.Sleep(2000 * time.Millisecond)
-		goto waitForCaptcha
-	case "ERROR_CAPTCHA_UNSOLVABLE":
-		goto startCaptcha
-	}
-	return capchaResponse2.Request, captchaResponse1.Request
-}
-
-func CapReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
-	var action string
-	if good {
-		action = "reportgood"
-	} else {
-		action = "reportbad"
-	}
-	_, aga, _ := ses.Get(fmt.Sprintf("https://rucaptcha.com/res.php?key=%s&action=%s&id=%s", apikey, action, capid)).End()
-	fmt.Println(aga)
-}
-
 //func MachineID() (string, error) {
 //	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Cryptography`, registry.QUERY_VALUE|registry.WOW64_64KEY)
 //	if err != nil {
@@ -519,53 +452,53 @@ func CapReport(ses *gorequest.SuperAgent, good bool, apikey, capid string) {
 //}
 
 //DEPRECATED
-func (ScUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
-	// Returns login string, password string, csrf string
-	const siteKey = "6LeedroUAAAAAK2RUkaNLVBYraeQXNVHX45O227A"
-	const pageUrl = "https://streamcraft.net/api/auth/register"
-	const regexToken = `<meta name="csrf-token" content="(?P<token>.*)">`
-	const action = "register"
-
-register:
-	resp, page, _ := ses.Get(pageUrl).End()
-
-	csrf := FindGroup_(page, regexToken)[1]
-
-	xsrf := (*http.Response)(resp).Cookies()[1].Value
-	//os.Exit(111)
-	email := randomdata.Email()
-	name := randomdata.FirstName(randomdata.Number(1, 2))
-	length := 8
-	if len(name) < 8 {
-		length = len(name)
-	}
-	login := name[:length] + randomdata.RandStringRunes(4) + strconv.Itoa(randomdata.Number(1980, 2017))
-	password := login + login
-
-	//RuCaptcha
-	//CapSolveV3(ses, pageUrl, action, siteKey, ruCaptchaKey)
-
-	var Json registerJson
-	var capid string
-	Json.Login = login
-	Json.Password = password
-	Json.Captcha, capid = CapSolveV3(ses, pageUrl, action, siteKey, ruCaptchaKey)
-	Json.Email = email
-	Jsonb, _ := json.Marshal(Json)
-
-	_, data, _ := ses.Post(pageUrl).Set("x-csrf-token", csrf).Set("x-xsrf-token", xsrf).Send(string(Jsonb)).EndBytes()
-	var registerResponseJson registerResponseJsonStruct
-	_ = json.Unmarshal(data, &registerResponseJson)
-	if registerResponseJson.Success == true {
-		CapReport(ses, true, ruCaptchaKey, capid)
-	} else {
-		CapReport(ses, true, ruCaptchaKey, capid)
-		goto register
-	}
-
-	fmt.Println(string(data))
-	return login, password, csrf
-}
+//func (ScUtils) RegisterAccount(ses *gorequest.SuperAgent, ruCaptchaKey string) (string, string, string) {
+//	// Returns login string, password string, csrf string
+//	const siteKey = "6LeedroUAAAAAK2RUkaNLVBYraeQXNVHX45O227A"
+//	const pageUrl = "https://streamcraft.net/api/auth/register"
+//	const regexToken = `<meta name="csrf-token" content="(?P<token>.*)">`
+//	const action = "register"
+//
+//register:
+//	resp, page, _ := ses.Get(pageUrl).End()
+//
+//	csrf := FindGroup_(page, regexToken)[1]
+//
+//	xsrf := (*http.Response)(resp).Cookies()[1].Value
+//	//os.Exit(111)
+//	email := randomdata.Email()
+//	name := randomdata.FirstName(randomdata.Number(1, 2))
+//	length := 8
+//	if len(name) < 8 {
+//		length = len(name)
+//	}
+//	login := name[:length] + randomdata.RandStringRunes(4) + strconv.Itoa(randomdata.Number(1980, 2017))
+//	password := login + login
+//
+//	//RuCaptcha
+//	//CapSolveV3(Ses, pageUrl, action, siteKey, ruCaptchaKey)
+//
+//	var Json registerJson
+//	var capid string
+//	Json.Login = login
+//	Json.Password = password
+//	Json.Captcha, capid = CapSolveV3(ses, pageUrl, action, siteKey, ruCaptchaKey)
+//	Json.Email = email
+//	Jsonb, _ := json.Marshal(Json)
+//
+//	_, data, _ := ses.Post(pageUrl).Set("x-csrf-token", csrf).Set("x-xsrf-token", xsrf).Send(string(Jsonb)).EndBytes()
+//	var registerResponseJson registerResponseJsonStruct
+//	_ = json.Unmarshal(data, &registerResponseJson)
+//	if registerResponseJson.Success == true {
+//		CapReport(ses, true, ruCaptchaKey, capid)
+//	} else {
+//		CapReport(ses, true, ruCaptchaKey, capid)
+//		goto register
+//	}
+//
+//	fmt.Println(string(data))
+//	return login, password, csrf
+//}
 
 //DEPRECATED
 func (ScUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
