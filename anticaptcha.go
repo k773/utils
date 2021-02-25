@@ -235,3 +235,5 @@ func (r *AntiCaptchaResponse) Report(good bool) error {
 	}
 	return e
 }
+
+//F

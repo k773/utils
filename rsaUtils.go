@@ -66,3 +66,5 @@ func (RSA) VerifySign(pubKey *rsa.PublicKey, data, sign []byte) bool {
 	var opts rsa.PSSOptions = rsa.PSSOptions{SaltLength: 20}
 	return rsa.VerifyPSS(pubKey, crypto.SHA256, Sha256B2B(data), sign, &opts) == nil
 }
+
+//F

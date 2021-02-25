@@ -179,3 +179,5 @@ func (ru *RuCaptchaResponse) CapReport(good bool) {
 	}
 	fmt.Println(aga)
 }
+
+//F

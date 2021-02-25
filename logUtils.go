@@ -52,3 +52,5 @@ func (logger Logger) Info(data ...interface{}) {
 		GoLog(fmt.Sprintf("[%v] [%v]:", logger.LoggerName, "INFO"), string_)
 	}
 }
+
+//F

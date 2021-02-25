@@ -89,3 +89,5 @@ func EncryptBtB64Safe(hexKey string, data []byte) string {
 	rand.Read(iv)
 	return EncryptBtB64(hexKey, append(iv, data...))
 }
+
+//F
