@@ -78,6 +78,27 @@ type reputationJson struct {
 type SliceTools struct {
 }
 
+type ProxyData struct {
+	ProxyType     string `json:"proxyType,omitempty"`
+	ProxyAddress  string `json:"proxyAddress,omitempty"`
+	ProxyPort     int    `json:"proxyPort,omitempty"`
+	ProxyLogin    string `json:"proxyLogin,omitempty"`
+	ProxyPassword string `json:"proxyPassword,omitempty"`
+	UserAgent     string `json:"userAgent,omitempty"`
+	Cookies       string `json:"cookies,omitempty"`
+}
+
+func (p *ProxyData) String() string {
+	return p.ProxyType + "://" + p.ProxyLogin + ":" + p.ProxyPassword + "@" + p.ProxyAddress + ":" + strconv.Itoa(p.ProxyPort)
+}
+
+func PressEnterToExit(msg ...interface{}) {
+	fmt.Println(msg...)
+	fmt.Println("\n\rPress Enter to continue...")
+	_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
+	os.Exit(0)
+}
+
 func AbsInt(a int) int {
 	if a >= 0 {
 		return a
