@@ -361,7 +361,7 @@ func FindRegexNamedGroups(data, regex string) []string {
 	return namedGroups
 }
 
-func GetServerPlayers(ip string) (bool, []string) {
+func GetQueryServerPlayers(ip string) (bool, []string) {
 	req := query.NewRequest()
 	_ = req.Connect(ip)
 	response, _ := req.Full()
