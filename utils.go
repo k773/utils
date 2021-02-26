@@ -99,6 +99,11 @@ func PressEnterToExit(msg ...interface{}) {
 	os.Exit(0)
 }
 
+func PrintAndExit(msg ...interface{}) {
+	fmt.Println(msg...)
+	os.Exit(0)
+}
+
 func AbsInt(a int) int {
 	if a >= 0 {
 		return a
