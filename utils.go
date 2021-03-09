@@ -105,11 +105,11 @@ func PrintAndExit(msg ...interface{}) {
 }
 
 func JoinErrors(e1 ...error) (e2 error) {
-	var s string
+	var s []string
 	for _, e := range e1 {
-		s += e.Error()
+		s = append(s, e.Error())
 	}
-	return errors.New(s)
+	return errors.New(strings.Join(s, "; "))
 }
 
 func AbsInt(a int) int {
