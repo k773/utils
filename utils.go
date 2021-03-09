@@ -107,7 +107,9 @@ func PrintAndExit(msg ...interface{}) {
 func JoinErrors(e1 ...error) (e2 error) {
 	var s []string
 	for _, e := range e1 {
-		s = append(s, e.Error())
+		if e != nil {
+			s = append(s, e.Error())
+		}
 	}
 	return errors.New(strings.Join(s, "; "))
 }
