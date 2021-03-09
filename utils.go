@@ -104,6 +104,14 @@ func PrintAndExit(msg ...interface{}) {
 	os.Exit(0)
 }
 
+func JoinErrors(e1 ...error) (e2 error) {
+	var s string
+	for _, e := range e1 {
+		s += e.Error()
+	}
+	return errors.New(s)
+}
+
 func AbsInt(a int) int {
 	if a >= 0 {
 		return a
