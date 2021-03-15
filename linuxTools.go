@@ -50,7 +50,7 @@ func (*LinuxHwTools) GetIOStats(pid int) (m map[string]int64) {
 	if err, lines := ReadFileByLines(fmt.Sprintf("/proc/%v/io", pid)); err == nil {
 		for _, line := range lines {
 			if s := strings.Split(line, " "); len(s) == 2 {
-				m[s[0]], _ = strconv.ParseInt(s[1], 10, 64)
+				m[s[0][:len(s[0])-1]], _ = strconv.ParseInt(s[1], 10, 64)
 			}
 		}
 	}
@@ -133,7 +133,7 @@ func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64,
 						break a
 					}
 				default:
-					fmt.Println(line, s)
+					//fmt.Println(line, s)
 				}
 			}
 		}
