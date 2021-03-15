@@ -11,6 +11,30 @@ import (
 type LinuxHwTools struct {
 }
 
+// /dev/sda1      162420480 38199960 124204136  24% /  <- use "/" as mnt
+func (*LinuxHwTools) GetDiskSpace(mnt ...string) (usage float64, free, used, total int64, e error) {
+	var sb []byte
+	if sb, e = exec.Command("bash", "-c", "df").CombinedOutput(); e == nil {
+		for _, line := range strings.Split(string(sb), "\n") {
+			if s := strings.Fields(line); len(s) == 6 {
+				if ContainsString(mnt, s[5]) {
+					a, _ := strconv.ParseInt(s[1], 10, 64) // total
+					b, _ := strconv.ParseInt(s[2], 10, 64) // used
+					c, _ := strconv.ParseInt(s[3], 10, 64) // available
+					total += a * 1024
+					used += b * 1024
+					free += c * 1024
+				}
+			}
+
+			if used != 0 {
+				usage = float64(used) / float64(total)
+			}
+		}
+	}
+	return
+}
+
 func (*LinuxHwTools) GetIOStats(pid int) (m map[string]int64) {
 	m = map[string]int64{}
 
