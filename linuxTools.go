@@ -36,6 +36,14 @@ func (*LinuxHwTools) GetDiskSpace(mnt ...string) (usage float64, free, used, tot
 	return
 }
 
+// Parses info from /proc/pid/io:
+//rchar: 4086576068
+//wchar: 5667644758219
+//syscr: 18960
+//syscw: 619175514
+//read_bytes: 5739536384
+//write_bytes: 10860712153088
+//cancelled_write_bytes: 41168896
 func (*LinuxHwTools) GetIOStats(pid int) (m map[string]int64) {
 	m = map[string]int64{}
 
@@ -47,6 +55,14 @@ func (*LinuxHwTools) GetIOStats(pid int) (m map[string]int64) {
 		}
 	}
 	return
+}
+
+// Simple collects IO statistics for t time period
+func (l *LinuxHwTools) CollectIOUsageStats(pid int, t time.Duration) (m map[string]int64) {
+	a := l.GetIOStats(pid)
+	time.Sleep(t)
+	b := l.GetIOStats(pid)
+	return subtractMaps(b, a)
 }
 
 func (*LinuxHwTools) GetProcPid(a string) (pid int, e error) {
