@@ -9,6 +9,7 @@ import (
 )
 
 type LinuxHwTools struct {
+	logger Logger
 }
 
 // /dev/sda1      162420480 38199960 124204136  24% /  <- use "/" as mnt
