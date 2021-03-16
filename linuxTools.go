@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -139,6 +140,14 @@ func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64,
 		}
 		used = total - available
 		usage = float64(used) / float64(total)
+	}
+	return
+}
+
+func (*LinuxHwTools) GetFdCount() (i int, e error) {
+	var out []byte
+	if out, e = exec.Command("/bin/sh", "-c", fmt.Sprintf("lsof -p %v | wc -l", os.Getpid())).Output(); e == nil {
+		i, e = strconv.Atoi(strings.Trim(string(out), "\n\r "))
 	}
 	return
 }
