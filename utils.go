@@ -111,7 +111,10 @@ func JoinErrors(e1 ...error) (e2 error) {
 			s = append(s, e.Error())
 		}
 	}
-	return errors.New(strings.Join(s, "; "))
+	if s != nil {
+		e2 = errors.New(strings.Join(s, "; "))
+	}
+	return
 }
 
 func AbsInt(a int) int {
