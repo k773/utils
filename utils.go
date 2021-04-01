@@ -78,6 +78,11 @@ type reputationJson struct {
 type SliceTools struct {
 }
 
+func Marshal(a interface{}) (b []byte) {
+	b, _ = json.Marshal(a)
+	return
+}
+
 type ProxyData struct {
 	ProxyType     string `json:"proxyType,omitempty"`
 	ProxyAddress  string `json:"proxyAddress,omitempty"`
