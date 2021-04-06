@@ -93,7 +93,7 @@ type ProxyData struct {
 	Cookies       string `json:"cookies,omitempty"`
 }
 
-func (p *ProxyData) String() string {
+func (p ProxyData) String() string {
 	return p.ProxyType + "://" + p.ProxyLogin + ":" + p.ProxyPassword + "@" + p.ProxyAddress + ":" + strconv.Itoa(p.ProxyPort)
 }
 
