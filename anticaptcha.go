@@ -105,6 +105,7 @@ func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaRespo
 		if newTaskResponse.ErrorID != 0 {
 			e = errors.New(newTaskResponse.ErrorCode + ": " + newTaskResponse.ErrorDescription)
 		} else {
+			antiCaptchaResponse.TaskID = newTaskResponse.TaskID
 		retry:
 			r, resp, _ := a.Ses.Get("https://api.anti-captcha.com/getTaskResult").
 				Send(antiCaptchaGetTaskResultRequest{
