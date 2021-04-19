@@ -94,6 +94,9 @@ const (
 	antiCaptchaTypeRecaptchaV2EnterpriseProxyless = "RecaptchaV2EnterpriseTaskProxyless"
 	antiCaptchaTypeRecaptchaV2EnterpriseProxy     = "RecaptchaV2EnterpriseTask"
 
+	antiCaptchaTypeRecaptchaV2Proxyless = "RecaptchaV2TaskProxyless"
+	antiCaptchaTypeRecaptchaV2Proxy     = "RecaptchaV2Task"
+
 	antiCaptchaTypeImageToText = "ImageToTextTask"
 )
 
@@ -127,6 +130,42 @@ func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaRespo
 				}
 			}
 		}
+	}
+	return
+}
+
+func (a *AntiCaptcha) SolveRecaptchaV2(websiteUrl, websiteKey string, proxyData *ProxyData) (antiCaptchaResponse AntiCaptchaResponse, e error) {
+	var taskType = antiCaptchaTypeRecaptchaV2Proxy
+	if proxyData == nil {
+		taskType = antiCaptchaTypeRecaptchaV2Proxyless
+		proxyData = &ProxyData{}
+	}
+
+	r, resp, _ := a.Ses.Post(antiCaptchaCreateTaskUrl).
+		Send(antiCaptchaNewTaskRequest{
+			ClientKey: a.ApiKey,
+			Task: antiCaptchaTaskRequest{
+				Type:          taskType,
+				WebsiteURL:    websiteUrl,
+				WebsiteKey:    websiteKey,
+				ProxyType:     proxyData.ProxyType,
+				ProxyAddress:  proxyData.ProxyAddress,
+				ProxyPort:     proxyData.ProxyPort,
+				ProxyLogin:    proxyData.ProxyLogin,
+				ProxyPassword: proxyData.ProxyPassword,
+				UserAgent:     proxyData.UserAgent,
+				Cookies:       proxyData.Cookies,
+			},
+			SoftID:       0,
+			LanguagePool: "en",
+		}).EndBytes()
+
+	e = errors.New("nil response")
+	if r != nil {
+		_ = r.Body.Close()
+
+		antiCaptchaResponse, e = a.waitForResponse(resp)
+		antiCaptchaResponse.TaskType = taskType
 	}
 	return
 }
