@@ -1,9 +1,21 @@
 package utils
 
 import (
+	cryptoRand "crypto/rand"
+	"encoding/binary"
+	"math/rand"
 	"sync"
-	"time"
 )
+
+func init() {
+	a := make([]byte, 8)
+	if _, e := cryptoRand.Read(a); e != nil {
+		panic(e)
+	}
+
+	seed := binary.BigEndian.Uint64(a)
+	rand.Seed(int64(seed))
+}
 
 type SafeCounter struct {
 	sync.RWMutex
@@ -64,7 +76,7 @@ const (
 )
 
 func (c *SafeCounter) Wait(i int, behaviour waitBehaviour) {
-	waiterKey := time.Now().UnixNano()
+	waiterKey := int64(rand.Uint64())
 	ch := make(chan int, 1)
 	ch <- c.Get()
 
