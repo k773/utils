@@ -19,14 +19,14 @@ func init() {
 
 type SafeCounter struct {
 	sync.RWMutex
-	notifier sync.Cond
+	notifier *sync.Cond
 	Value    int
 }
 
 func NewSafeCounter() SafeCounter {
 	return SafeCounter{
 		RWMutex:  sync.RWMutex{},
-		notifier: sync.Cond{},
+		notifier: sync.NewCond(&sync.Mutex{}),
 		Value:    0,
 	}
 }
