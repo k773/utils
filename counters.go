@@ -19,22 +19,15 @@ func init() {
 
 type SafeCounter struct {
 	sync.RWMutex
-
-	waiters struct {
-		sync.RWMutex
-		m map[int64]*chan int
-	}
-	Value int
+	notifier sync.Cond
+	Value    int
 }
 
 func NewSafeCounter() SafeCounter {
 	return SafeCounter{
-		RWMutex: sync.RWMutex{},
-		waiters: struct {
-			sync.RWMutex
-			m map[int64]*chan int
-		}{m: map[int64]*chan int{}},
-		Value: 0,
+		RWMutex:  sync.RWMutex{},
+		notifier: sync.Cond{},
+		Value:    0,
 	}
 }
 
@@ -42,14 +35,14 @@ func (c *SafeCounter) Increase() {
 	c.Lock()
 	defer c.Unlock()
 	c.Value++
-	c.notify(c.Value)
+	c.notify()
 }
 
 func (c *SafeCounter) Decrease() {
 	c.Lock()
 	defer c.Unlock()
 	c.Value--
-	c.notify(c.Value)
+	c.notify()
 }
 
 func (c *SafeCounter) Get() int {
@@ -58,12 +51,8 @@ func (c *SafeCounter) Get() int {
 	return c.Value
 }
 
-func (c *SafeCounter) notify(num int) {
-	c.waiters.RLock()
-	for _, waiter := range c.waiters.m {
-		*waiter <- num
-	}
-	c.waiters.RUnlock()
+func (c *SafeCounter) notify() {
+	c.notifier.Broadcast()
 }
 
 // param t: 0 - will return if value less or equals i, 1 - if value equals i, 2 - if value greater or equals i
@@ -76,17 +65,10 @@ const (
 )
 
 func (c *SafeCounter) Wait(i int, behaviour waitBehaviour) {
-	waiterKey := int64(rand.Uint64())
-	ch := make(chan int, 1)
-	ch <- c.Get()
-
-	c.waiters.Lock()
-	c.waiters.m[waiterKey] = &ch
-	c.waiters.Unlock()
 
 f:
 	for {
-		v := <-ch
+		v := c.Get()
 		switch behaviour {
 		case WaitBehaviourEquals:
 			if v == i {
@@ -101,11 +83,11 @@ f:
 				break f
 			}
 		}
-	}
 
-	c.waiters.Lock()
-	delete(c.waiters.m, waiterKey)
-	c.waiters.Unlock()
+		c.notifier.L.Lock()
+		c.notifier.Wait()
+		c.notifier.L.Unlock()
+	}
 }
 
 type SafeCounterLimited struct {
