@@ -52,7 +52,9 @@ func (c *SafeCounter) Get() int {
 }
 
 func (c *SafeCounter) notify() {
+	c.notifier.L.Lock()
 	c.notifier.Broadcast()
+	c.notifier.L.Unlock()
 }
 
 // param t: 0 - will return if value less or equals i, 1 - if value equals i, 2 - if value greater or equals i
@@ -68,6 +70,7 @@ func (c *SafeCounter) Wait(i int, behaviour waitBehaviour) {
 
 f:
 	for {
+		c.notifier.L.Lock()
 		v := c.Get()
 		switch behaviour {
 		case WaitBehaviourEquals:
@@ -84,7 +87,6 @@ f:
 			}
 		}
 
-		c.notifier.L.Lock()
 		c.notifier.Wait()
 		c.notifier.L.Unlock()
 	}
