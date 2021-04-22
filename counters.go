@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"math/rand"
 	"sync"
+	"time"
 )
 
 func init() {
@@ -33,14 +34,18 @@ func NewSafeCounter() SafeCounter {
 
 func (c *SafeCounter) Increase() {
 	c.Lock()
+	c.notifier.L.Lock()
 	defer c.Unlock()
+	defer c.notifier.L.Unlock()
 	c.Value++
 	c.notify()
 }
 
 func (c *SafeCounter) Decrease() {
 	c.Lock()
+	c.notifier.L.Lock()
 	defer c.Unlock()
+	defer c.notifier.L.Unlock()
 	c.Value--
 	c.notify()
 }
@@ -52,9 +57,7 @@ func (c *SafeCounter) Get() int {
 }
 
 func (c *SafeCounter) notify() {
-	c.notifier.L.Lock()
 	c.notifier.Broadcast()
-	c.notifier.L.Unlock()
 }
 
 // param t: 0 - will return if value less or equals i, 1 - if value equals i, 2 - if value greater or equals i
@@ -67,10 +70,10 @@ const (
 )
 
 func (c *SafeCounter) Wait(i int, behaviour waitBehaviour) {
-
+	//c.notifier.L.Lock()
+	//defer c.notifier.L.Unlock()
 f:
 	for {
-		c.notifier.L.Lock()
 		v := c.Get()
 		switch behaviour {
 		case WaitBehaviourEquals:
@@ -87,8 +90,8 @@ f:
 			}
 		}
 
-		c.notifier.Wait()
-		c.notifier.L.Unlock()
+		time.Sleep(time.Microsecond)
+		//c.notifier.Wait()
 	}
 }
 
