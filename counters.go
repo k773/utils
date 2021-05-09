@@ -90,7 +90,7 @@ f:
 			}
 		}
 
-		time.Sleep(time.Microsecond)
+		time.Sleep(time.Millisecond)
 		//c.notifier.Wait()
 	}
 }
