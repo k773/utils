@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/parnurzeal/gorequest"
 	"time"
 )
@@ -110,7 +111,7 @@ func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaRespo
 		} else {
 			antiCaptchaResponse.TaskID = newTaskResponse.TaskID
 		retry:
-			r, resp, _ := a.Ses.Get("https://api.anti-captcha.com/getTaskResult").
+			r, resp, _ := a.Ses.Clone().Get("https://api.anti-captcha.com/getTaskResult").
 				Send(antiCaptchaGetTaskResultRequest{
 					ClientKey: a.ApiKey,
 					TaskID:    newTaskResponse.TaskID,
@@ -141,7 +142,7 @@ func (a *AntiCaptcha) SolveRecaptchaV2(websiteUrl, websiteKey string, proxyData 
 		proxyData = &ProxyData{}
 	}
 
-	r, resp, _ := a.Ses.Post(antiCaptchaCreateTaskUrl).
+	r, resp, _ := a.Ses.Clone().Post(antiCaptchaCreateTaskUrl).
 		Send(antiCaptchaNewTaskRequest{
 			ClientKey: a.ApiKey,
 			Task: antiCaptchaTaskRequest{
@@ -177,7 +178,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 		proxyData = &ProxyData{}
 	}
 
-	r, resp, _ := a.Ses.Post(antiCaptchaCreateTaskUrl).
+	r, resp, _ := a.Ses.Clone().Post(antiCaptchaCreateTaskUrl).
 		Send(antiCaptchaNewTaskRequest{
 			ClientKey: a.ApiKey,
 			Task: antiCaptchaTaskRequest{
@@ -205,6 +206,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 
 		antiCaptchaResponse, e = a.waitForResponse(resp)
 		antiCaptchaResponse.TaskType = taskType
+		fmt.Printf("[acticaptcha.go] [debug] [SolveRecaptchaEnterpriseV2]: url: %v, siteKey: %v, s: %v, proxy: %v; response: %v\n", websiteUrl, websiteKey, s, proxyData, string(Marshal(resp)))
 	}
 	return
 }
