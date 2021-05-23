@@ -204,6 +204,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 	if r != nil {
 		_ = r.Body.Close()
 
+		//11
 		antiCaptchaResponse, e = a.waitForResponse(resp)
 		antiCaptchaResponse.TaskType = taskType
 		fmt.Printf("[acticaptcha.go] [debug] [SolveRecaptchaEnterpriseV2]: url: %v, siteKey: %v, s: %v, proxy: %v; response: %v\n", websiteUrl, websiteKey, s, proxyData, string(Marshal(resp)))
