@@ -18,6 +18,7 @@ type Rotator struct {
 	s                    sync.RWMutex
 }
 
+//
 func NewRotator(autoRefillUnused bool, customRefillFunc func(meta string) error, customRefillFuncMeta string) *Rotator {
 	return &Rotator{
 		Items: struct {
