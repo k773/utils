@@ -4,12 +4,12 @@ import "sync"
 
 type Rotator struct {
 	Items struct {
-		m map[int]interface{}
+		M map[int]interface{}
 		i int
 		s sync.RWMutex
 	}
 	itemsUnused struct {
-		m map[int]interface{}
+		M map[int]interface{}
 		s sync.RWMutex
 	}
 	autoRefillUnused     bool
@@ -21,14 +21,14 @@ type Rotator struct {
 func NewRotator(autoRefillUnused bool, customRefillFunc func(meta string) error, customRefillFuncMeta string) *Rotator {
 	return &Rotator{
 		Items: struct {
-			m map[int]interface{}
+			M map[int]interface{}
 			i int
 			s sync.RWMutex
-		}{m: map[int]interface{}{}},
+		}{M: map[int]interface{}{}},
 		itemsUnused: struct {
-			m map[int]interface{}
+			M map[int]interface{}
 			s sync.RWMutex
-		}{m: map[int]interface{}{}},
+		}{M: map[int]interface{}{}},
 		autoRefillUnused:     autoRefillUnused,
 		s:                    sync.RWMutex{},
 		customRefillFunc:     customRefillFunc,
@@ -40,11 +40,11 @@ func (r *Rotator) AddItem(pushToUnused bool, item interface{}) int {
 	r.Items.s.Lock()
 	defer r.Items.s.Unlock()
 
-	r.Items.m[r.Items.i] = item
+	r.Items.M[r.Items.i] = item
 	if pushToUnused {
 		r.itemsUnused.s.Lock()
 		defer r.itemsUnused.s.Unlock()
-		r.itemsUnused.m[r.Items.i] = item
+		r.itemsUnused.M[r.Items.i] = item
 	}
 
 	r.Items.i++
@@ -61,9 +61,9 @@ func (r *Rotator) AddItems(alreadyLocked, pushToUnused bool, items ...interface{
 
 	for _, item := range items {
 		ids = append(ids, r.Items.i)
-		r.Items.m[r.Items.i] = item
+		r.Items.M[r.Items.i] = item
 		if pushToUnused {
-			r.itemsUnused.m[r.Items.i] = item
+			r.itemsUnused.M[r.Items.i] = item
 		}
 
 		r.Items.i++
@@ -76,11 +76,11 @@ func (r *Rotator) RemoveItem(id int, removeFromUnused bool) {
 	r.Items.s.Lock()
 	defer r.Items.s.Unlock()
 
-	delete(r.Items.m, id)
+	delete(r.Items.M, id)
 	if removeFromUnused {
 		r.itemsUnused.s.Lock()
 		defer r.itemsUnused.s.Unlock()
-		delete(r.itemsUnused.m, id)
+		delete(r.itemsUnused.M, id)
 	}
 }
 
@@ -90,14 +90,14 @@ func (r *Rotator) GetItemByID(id int) (item interface{}, unused bool) {
 	defer r.itemsUnused.s.Unlock()
 	defer r.Items.s.Unlock()
 
-	_, unused = r.itemsUnused.m[id]
-	item = r.Items.m[id]
+	_, unused = r.itemsUnused.M[id]
+	item = r.Items.M[id]
 	return
 }
 
 func (r *Rotator) GetRandomUnusedItem() interface{} {
 	r.itemsUnused.s.RLock()
-	if len(r.itemsUnused.m) == 0 {
+	if len(r.itemsUnused.M) == 0 {
 		r.itemsUnused.s.RUnlock()
 		if r.autoRefillUnused {
 			r.RefillUnused()
@@ -105,7 +105,7 @@ func (r *Rotator) GetRandomUnusedItem() interface{} {
 		r.itemsUnused.s.RLock()
 	}
 	var item interface{}
-	for _, a := range r.itemsUnused.m {
+	for _, a := range r.itemsUnused.M {
 		item = a
 		break
 	}
@@ -115,7 +115,7 @@ func (r *Rotator) GetRandomUnusedItem() interface{} {
 
 func (r *Rotator) PullRandomUnusedItem() interface{} {
 	r.itemsUnused.s.RLock()
-	if len(r.itemsUnused.m) == 0 {
+	if len(r.itemsUnused.M) == 0 {
 		r.itemsUnused.s.RUnlock()
 		if r.autoRefillUnused {
 			r.RefillUnused()
@@ -123,8 +123,8 @@ func (r *Rotator) PullRandomUnusedItem() interface{} {
 		r.itemsUnused.s.RLock()
 	}
 	var item interface{}
-	for i, a := range r.itemsUnused.m {
-		delete(r.itemsUnused.m, i)
+	for i, a := range r.itemsUnused.M {
+		delete(r.itemsUnused.M, i)
 		item = a
 		break
 	}
@@ -142,9 +142,9 @@ func (r *Rotator) RefillUnused() {
 		defer r.itemsUnused.s.Unlock()
 		defer r.Items.s.Unlock()
 
-		r.itemsUnused.m = map[int]interface{}{}
-		for i, item := range r.Items.m {
-			r.itemsUnused.m[i] = item
+		r.itemsUnused.M = map[int]interface{}{}
+		for i, item := range r.Items.M {
+			r.itemsUnused.M[i] = item
 		}
 	}
 }
@@ -158,8 +158,8 @@ func (r *Rotator) Clear(pushToUnused bool, items ...interface{}) {
 
 	r.Items.i = 0
 
-	r.Items.m = map[int]interface{}{}
-	r.itemsUnused.m = map[int]interface{}{}
+	r.Items.M = map[int]interface{}{}
+	r.itemsUnused.M = map[int]interface{}{}
 
 	if len(items) > 0 {
 		r.AddItems(true, pushToUnused, items...)
@@ -181,5 +181,5 @@ func (r *Rotator) DisableAutoRefillUnused() {
 func (r *Rotator) CountUnused() (i int) {
 	r.itemsUnused.s.RLock()
 	r.itemsUnused.s.RUnlock()
-	return len(r.itemsUnused.m)
+	return len(r.itemsUnused.M)
 }
