@@ -102,9 +102,16 @@ func (n *SmsActivateNumber) GetStatus() (status string, code string, e error) {
 	return
 }
 
-func (n *SmsActivateNumber) GetSms() (code string, e error) {
+func (n *SmsActivateNumber) GetSms(timeout time.Duration) (code string, e error) {
+	var deadline = time.Now().Add(timeout)
+
 	var status string
 	for e == nil {
+		if time.Now().After(deadline) {
+			e = errors.New("timeout")
+			continue
+		}
+
 		status, code, e = n.GetStatus()
 		if e != nil {
 			continue
