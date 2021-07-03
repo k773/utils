@@ -125,7 +125,7 @@ func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaRespo
 					if antiCaptchaResponse.ErrorID != 0 {
 						e = errors.New(antiCaptchaResponse.ErrorCode + ": " + antiCaptchaResponse.ErrorDescription)
 					} else if antiCaptchaResponse.Status == "processing" {
-						time.Sleep(2 * time.Second)
+						time.Sleep(10 * time.Second)
 						goto retry
 					}
 				}
