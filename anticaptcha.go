@@ -102,6 +102,7 @@ const (
 )
 
 func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
+	time.Sleep(10 * time.Second)
 	antiCaptchaResponse.antiCaptchaInstance = a
 	var newTaskResponse antiCaptchaNewTaskResponse
 
