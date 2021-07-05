@@ -214,7 +214,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 }
 
 func (a *AntiCaptcha) SolveImageCaptcha(img []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
-	r, resp, _ := a.Ses.Post(antiCaptchaCreateTaskUrl).
+	r, resp, _ := a.Ses.Clone().Post(antiCaptchaCreateTaskUrl).
 		Send(antiCaptchaNewTaskRequest{
 			ClientKey: a.ApiKey,
 			Task: antiCaptchaTaskRequest{
@@ -261,7 +261,7 @@ func (r *AntiCaptchaResponse) Report(good bool) error {
 	if url == "" {
 		return errors.New("method is not supported")
 	}
-	re, resp, _ := r.antiCaptchaInstance.Ses.Post(url).
+	re, resp, _ := r.antiCaptchaInstance.Ses.Clone().Post(url).
 		Send(antiCaptchaGetTaskResultRequest{
 			ClientKey: r.antiCaptchaInstance.ApiKey,
 			TaskID:    r.TaskID,
