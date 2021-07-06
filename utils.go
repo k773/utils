@@ -84,11 +84,11 @@ func Marshal(a interface{}) (b []byte) {
 }
 
 type ProxyData struct {
-	ProxyType     string `json:"proxyType,omitempty"`
-	ProxyAddress  string `json:"proxyAddress,omitempty"`
-	ProxyPort     int    `json:"proxyPort,omitempty"`
-	ProxyLogin    string `json:"proxyLogin,omitempty"`
-	ProxyPassword string `json:"proxyPassword,omitempty"`
+	ProxyType     string `json:"proxyType"`
+	ProxyAddress  string `json:"proxyAddress"`
+	ProxyPort     int    `json:"proxyPort"`
+	ProxyLogin    string `json:"proxyLogin"`
+	ProxyPassword string `json:"proxyPassword"`
 	UserAgent     string `json:"userAgent,omitempty"`
 	Cookies       string `json:"cookies,omitempty"`
 }
