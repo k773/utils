@@ -2,16 +2,15 @@ package networking
 
 import (
 	"bytes"
-	"errors"
 	"time"
 )
 
 func (c *connection) StartPinging() {
-	for t := range time.NewTicker(c.s.PingInterval).C {
-		if t.Sub(c.getLastPongReceived()) > c.s.PingTimeout {
-			c.Close(errors.New("ping timeout"))
-			break
-		}
+	for range time.NewTicker(c.s.PingInterval).C {
+		//if t.Sub(c.getLastPongReceived()) > c.s.PingTimeout {
+		//	c.Close(errors.New("ping timeout"))
+		//	break
+		//}
 
 		if e := c.SendPing(); e != nil {
 			c.Close(e)
