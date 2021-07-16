@@ -83,6 +83,23 @@ func Marshal(a interface{}) (b []byte) {
 	return
 }
 
+type RateLimiter struct {
+	t *time.Ticker
+}
+
+func NewRateLimiter(d time.Duration) *RateLimiter {
+	return &RateLimiter{t: time.NewTicker(d)}
+}
+
+func (r *RateLimiter) Wait() {
+	<-r.t.C
+	return
+}
+
+func (r *RateLimiter) Done() {
+	r.t.Stop()
+}
+
 type ProxyData struct {
 	ProxyType     string `json:"proxyType"`
 	ProxyAddress  string `json:"proxyAddress"`
@@ -95,6 +112,21 @@ type ProxyData struct {
 
 func (p ProxyData) String() string {
 	return p.ProxyType + "://" + p.ProxyLogin + ":" + p.ProxyPassword + "@" + p.ProxyAddress + ":" + strconv.Itoa(p.ProxyPort)
+}
+
+func RepeatStringToSlice(s string, n int) []string {
+	a := make([]string, n)
+	for i := range a {
+		a[i] = s
+	}
+	return a
+}
+
+func BuildQuestionMarks(n int) string {
+	if n == 0 {
+		return ""
+	}
+	return strings.Join(RepeatStringToSlice("?", n), ",")
 }
 
 func PressEnterToExit(msg ...interface{}) {
