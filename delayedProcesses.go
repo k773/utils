@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"github.com/k773/utils"
 	"sync"
 	"time"
 )
@@ -17,8 +16,8 @@ type DelayedProcess struct {
 
 // DelayedProcessesPerformer : Interval may be 0 -> action will only be performed once
 func DelayedProcessesPerformer(delayedProcesses ...DelayedProcess) {
-	logger := utils.Logger{
-		LogLevel:   utils.LevelDebug,
+	logger := Logger{
+		LogLevel:   LevelDebug,
 		LoggerName: "delayedProcessesPerformer",
 	}
 	var s sync.Mutex
