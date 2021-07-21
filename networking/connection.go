@@ -22,6 +22,8 @@ type Settings struct {
 
 type connection struct {
 	sync.RWMutex
+	r sync.Mutex
+	w sync.Mutex
 
 	c                net.Conn
 	cb               Callbacks
@@ -102,13 +104,12 @@ func (c *connection) Run() {
 		var msgID byte
 		var buf *bytes.Buffer
 		if msgID, buf, e = c.readPacket(); e == nil {
+			println(msgID)
 			// Ping-pong
 			if msgID == 0 || msgID == 1 {
 				if msgID == 0 { // Ping received
-					println("ping")
 					e = c.OnPing(buf)
 				} else {
-					println("pong")
 					c.OnPong(buf)
 				}
 				continue
@@ -121,6 +122,9 @@ func (c *connection) Run() {
 }
 
 func (c *connection) readPacket() (msgID byte, buf *bytes.Buffer, e error) {
+	c.r.Lock()
+	defer c.r.Unlock()
+
 	var data []byte
 	if data, e = c.read(4); e == nil {
 		l := int(binary.BigEndian.Uint32(data))
@@ -147,6 +151,9 @@ func (c *connection) read(length int) (buf []byte, e error) {
 }
 
 func (c *connection) Write(msgID byte, data []byte) (e error) {
+	c.w.Lock()
+	defer c.w.Unlock()
+
 	var data_ = make([]byte, 4+len(data)+1)
 	binary.BigEndian.PutUint32(data_, uint32(len(data)+1))
 	data_[4] = msgID
