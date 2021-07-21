@@ -104,7 +104,6 @@ func (c *connection) Run() {
 		var msgID byte
 		var buf *bytes.Buffer
 		if msgID, buf, e = c.readPacket(); e == nil {
-			println(msgID)
 			// Ping-pong
 			if msgID == 0 || msgID == 1 {
 				if msgID == 0 { // Ping received
