@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"github.com/k773/utils"
 	"os"
 	"os/exec"
 	"strconv"
@@ -182,7 +181,7 @@ func (*LinuxHwTools) GetTrafficSample(interface_ string) (tx, rx int64, e error)
 			var e1, e2 error
 			tx, e1 = strconv.ParseInt(s[0], 10, 64)
 			rx, e2 = strconv.ParseInt(s[1], 10, 64)
-			e = utils.JoinErrors(e1, e2)
+			e = JoinErrors(e1, e2)
 		} else {
 			e = errors.New("wrong output split")
 		}
