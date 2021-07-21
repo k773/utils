@@ -160,7 +160,7 @@ func (*LinuxHwTools) GetFdCount() (usage float64, available, used, total int, e 
 
 func (l *LinuxHwTools) CalculateTraffic(interface_ string, d time.Duration) (rx, tx float64, e error) {
 	rx2, tx2, e := l.GetTraffic(interface_, d)
-	return float64(rx2) / float64(d), float64(tx2) / float64(d), e
+	return float64(rx2) / float64(d/time.Second), float64(tx2) / float64(d/time.Second), e
 }
 
 func (l *LinuxHwTools) GetTraffic(interface_ string, d time.Duration) (rx, tx int64, e error) {
