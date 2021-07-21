@@ -105,8 +105,10 @@ func (c *connection) Run() {
 			// Ping-pong
 			if msgID == 0 || msgID == 1 {
 				if msgID == 0 { // Ping received
+					println("ping")
 					e = c.OnPing(buf)
 				} else {
+					println("pong")
 					c.OnPong(buf)
 				}
 				continue
