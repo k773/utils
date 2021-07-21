@@ -14,7 +14,7 @@ func EncryptS(key, data []byte) (res []byte, e error) {
 	var block cipher.Block
 	if block, e = aes.NewCipher(key); e == nil {
 		res = make([]byte, aes.BlockSize+len(data))
-		if _, e = io.ReadFull(rand.Reader, res[:aes.BlockSize]); e != nil {
+		if _, e = io.ReadFull(rand.Reader, res[:aes.BlockSize]); e == nil {
 			cipher.NewCFBEncrypter(block, res[:aes.BlockSize]).XORKeyStream(res[aes.BlockSize:], data)
 		}
 	}
@@ -29,7 +29,7 @@ func DecryptS(key, data []byte) (res []byte, e error) {
 
 	var block cipher.Block
 	if block, e = aes.NewCipher(key); e == nil {
-		cipher.NewCFBDecrypter(block, data[:aes.BlockSize]).XORKeyStream(data[aes.BlockSize:], res)
+		cipher.NewCFBDecrypter(block, data[:aes.BlockSize]).XORKeyStream(res, data[aes.BlockSize:])
 	}
 	return
 }
