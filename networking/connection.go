@@ -117,7 +117,7 @@ func (c *connection) Run() {
 		}
 	}
 	c.Close(e)
-	println("Run(): finished")
+	//println("Run(): finished")
 }
 
 func (c *connection) readPacket() (msgID byte, buf *bytes.Buffer, e error) {
