@@ -149,7 +149,7 @@ func (*LinuxHwTools) GetFdCount() (usage float64, available, used, total int, e 
 	var out []byte
 	if out, e = exec.Command("/bin/sh", "-c", "ulimit -n").Output(); e == nil {
 		total, e = strconv.Atoi(strings.Trim(string(out), "\n\r "))
-		if out, e = exec.Command("/bin/sh", "-c", fmt.Sprintf("lsof -p %v | wc -l", os.Getpid())).Output(); e == nil {
+		if out, e = exec.Command("/bin/sh", "-c", fmt.Sprintf("ls /proc/%v/fd/ | wc -l", os.Getpid())).Output(); e == nil {
 			used, e = strconv.Atoi(strings.Trim(string(out), "\n\r "))
 			available = total - used
 			usage = float64(used) / float64(total)
