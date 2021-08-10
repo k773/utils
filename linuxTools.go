@@ -141,7 +141,8 @@ func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64,
 		}
 		used = total - available
 		usage = float64(used) / float64(total)
-	}
+	} //
+
 	return
 }
 
