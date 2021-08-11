@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -117,6 +118,9 @@ func (*LinuxHwTools) GetCPUSample() (idle, total uint64, e error) {
 }
 
 func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64, e error) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
 	var lines []string
 	if e, lines = ReadFileByLines("/proc/meminfo"); e == nil {
 	a:
@@ -139,9 +143,11 @@ func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64,
 				}
 			}
 		}
+		available = available + int64(m.HeapIdle)
 		used = total - available
 		usage = float64(used) / float64(total)
-	}
+	} //
+
 	return
 }
 
@@ -149,7 +155,7 @@ func (*LinuxHwTools) GetFdCount() (usage float64, available, used, total int, e 
 	var out []byte
 	if out, e = exec.Command("/bin/sh", "-c", "ulimit -n").Output(); e == nil {
 		total, e = strconv.Atoi(strings.Trim(string(out), "\n\r "))
-		if out, e = exec.Command("/bin/sh", "-c", fmt.Sprintf("lsof -p %v | wc -l", os.Getpid())).Output(); e == nil {
+		if out, e = exec.Command("/bin/sh", "-c", fmt.Sprintf("ls /proc/%v/fd/ | wc -l", os.Getpid())).Output(); e == nil {
 			used, e = strconv.Atoi(strings.Trim(string(out), "\n\r "))
 			available = total - used
 			usage = float64(used) / float64(total)

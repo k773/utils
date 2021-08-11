@@ -16,7 +16,7 @@ type DelayedProcess struct {
 
 // DelayedProcessesPerformer : Interval may be 0 -> action will only be performed once
 func DelayedProcessesPerformer(delayedProcesses ...DelayedProcess) {
-	logger := Logger{
+	logger := LoggerO{
 		LogLevel:   LevelDebug,
 		LoggerName: "delayedProcessesPerformer",
 	}

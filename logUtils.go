@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Logger struct {
+type LoggerO struct {
 	LogLevel   int
 	LoggerName string
 }
@@ -23,7 +23,7 @@ func GoLog(args ...interface{}) {
 	fmt.Println(fmt.Sprintf("[%v]", timeString)+":", string_) //aaa
 }
 
-func (logger Logger) Debug(data ...interface{}) {
+func (logger LoggerO) Debug(data ...interface{}) {
 	if logger.LogLevel >= LevelDebug {
 		var string_ string
 		for _, element := range data {
@@ -33,7 +33,7 @@ func (logger Logger) Debug(data ...interface{}) {
 	}
 }
 
-func (logger Logger) Error(data ...interface{}) {
+func (logger LoggerO) Error(data ...interface{}) {
 	if logger.LogLevel >= LevelError {
 		var string_ string
 		for _, element := range data {
@@ -43,7 +43,7 @@ func (logger Logger) Error(data ...interface{}) {
 	}
 }
 
-func (logger Logger) Info(data ...interface{}) {
+func (logger LoggerO) Info(data ...interface{}) {
 	if logger.LogLevel >= LevelInfo {
 		var string_ string //
 		for _, element := range data {

@@ -4,12 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/parnurzeal/gorequest"
 	"time"
 )
 
 type AntiCaptcha struct {
+	Logger *Logger
 	Ses    *gorequest.SuperAgent
 	ApiKey string
 }
@@ -101,9 +101,10 @@ const (
 	antiCaptchaTypeImageToText = "ImageToTextTask"
 )
 
-func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
-	time.Sleep(10 * time.Second)
+func (a *AntiCaptcha) waitForResponse(acType string, newTaskResponseB []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
+	time.Sleep(20 * time.Second)
 	antiCaptchaResponse.antiCaptchaInstance = a
+	antiCaptchaResponse.TaskType = acType
 	var newTaskResponse antiCaptchaNewTaskResponse
 
 	if e = json.Unmarshal(newTaskResponseB, &newTaskResponse); e == nil {
@@ -126,11 +127,21 @@ func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaRespo
 					if antiCaptchaResponse.ErrorID != 0 {
 						e = errors.New(antiCaptchaResponse.ErrorCode + ": " + antiCaptchaResponse.ErrorDescription)
 					} else if antiCaptchaResponse.Status == "processing" {
-						time.Sleep(10 * time.Second)
+						time.Sleep(20 * time.Second)
 						goto retry
 					}
 				}
 			}
+		}
+	}
+
+	if e == nil {
+		if a.Logger != nil {
+			a.Logger.Log(acType, "info", string(Marshal(antiCaptchaResponse)))
+		}
+	} else {
+		if a.Logger != nil {
+			a.Logger.Log(acType, "error", e)
 		}
 	}
 	return
@@ -166,8 +177,8 @@ func (a *AntiCaptcha) SolveRecaptchaV2(websiteUrl, websiteKey string, proxyData 
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(resp)
-		antiCaptchaResponse.TaskType = taskType
+		antiCaptchaResponse, e = a.waitForResponse(taskType, resp)
+
 	}
 	return
 }
@@ -205,10 +216,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 	if r != nil {
 		_ = r.Body.Close()
 
-		//1
-		antiCaptchaResponse, e = a.waitForResponse(resp)
-		antiCaptchaResponse.TaskType = taskType
-		fmt.Printf("[acticaptcha.go] [debug] [SolveRecaptchaEnterpriseV2]: url: %v, siteKey: %v, s: %v, proxy: %v; response: %v\n", websiteUrl, websiteKey, s, proxyData, string(Marshal(resp)))
+		antiCaptchaResponse, e = a.waitForResponse(taskType, resp)
 	}
 	return
 }
@@ -233,8 +241,7 @@ func (a *AntiCaptcha) SolveImageCaptcha(img []byte) (antiCaptchaResponse AntiCap
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(resp)
-		antiCaptchaResponse.TaskType = antiCaptchaTypeImageToText
+		antiCaptchaResponse, e = a.waitForResponse(antiCaptchaTypeImageToText, resp)
 	}
 	return
 }
