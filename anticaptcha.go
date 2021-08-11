@@ -101,7 +101,7 @@ const (
 	antiCaptchaTypeImageToText = "ImageToTextTask"
 )
 
-func (a *AntiCaptcha) waitForResponse(acType string, newTaskResponseB []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
+func (a *AntiCaptcha) waitForResponse(acType, sitekey, siteUrl string, newTaskResponseB []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
 	time.Sleep(20 * time.Second)
 	antiCaptchaResponse.antiCaptchaInstance = a
 	antiCaptchaResponse.TaskType = acType
@@ -137,11 +137,11 @@ func (a *AntiCaptcha) waitForResponse(acType string, newTaskResponseB []byte) (a
 
 	if e == nil {
 		if a.Logger != nil {
-			a.Logger.Log(acType, "info", string(Marshal(antiCaptchaResponse)))
+			a.Logger.Log(acType, "info", "sitekey:", sitekey, ", site url:", siteUrl, "; response:", string(Marshal(antiCaptchaResponse)))
 		}
 	} else {
 		if a.Logger != nil {
-			a.Logger.Log(acType, "error", e)
+			a.Logger.Log(acType, "error", "sitekey:", sitekey, ", site url:", siteUrl, "; error:", e)
 		}
 	}
 	return
@@ -177,7 +177,7 @@ func (a *AntiCaptcha) SolveRecaptchaV2(websiteUrl, websiteKey string, proxyData 
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(taskType, resp)
+		antiCaptchaResponse, e = a.waitForResponse(taskType, websiteKey, websiteUrl, resp)
 
 	}
 	return
@@ -216,7 +216,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(taskType, resp)
+		antiCaptchaResponse, e = a.waitForResponse(taskType, websiteKey, websiteUrl, resp)
 	}
 	return
 }
@@ -241,7 +241,7 @@ func (a *AntiCaptcha) SolveImageCaptcha(img []byte) (antiCaptchaResponse AntiCap
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(antiCaptchaTypeImageToText, resp)
+		antiCaptchaResponse, e = a.waitForResponse(antiCaptchaTypeImageToText, "none(image)", "none(imege)", resp)
 	}
 	return
 }
