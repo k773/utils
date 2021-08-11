@@ -102,7 +102,7 @@ const (
 )
 
 func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaResponse AntiCaptchaResponse, e error) {
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 	antiCaptchaResponse.antiCaptchaInstance = a
 	var newTaskResponse antiCaptchaNewTaskResponse
 
@@ -126,7 +126,7 @@ func (a *AntiCaptcha) waitForResponse(newTaskResponseB []byte) (antiCaptchaRespo
 					if antiCaptchaResponse.ErrorID != 0 {
 						e = errors.New(antiCaptchaResponse.ErrorCode + ": " + antiCaptchaResponse.ErrorDescription)
 					} else if antiCaptchaResponse.Status == "processing" {
-						time.Sleep(10 * time.Second)
+						time.Sleep(20 * time.Second)
 						goto retry
 					}
 				}
