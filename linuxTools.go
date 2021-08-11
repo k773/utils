@@ -12,10 +12,10 @@ import (
 )
 
 type LinuxHwTools struct {
-	Logger Logger
+	Logger LoggerO
 }
 
-// /dev/sda1      162420480 38199960 124204136  24% /  <- use "/" as mnt
+// GetDiskSpace /dev/sda1      162420480 38199960 124204136  24% /  <- use "/" as mnt
 func (*LinuxHwTools) GetDiskSpace(mnt ...string) (usage float64, free, used, total int64, e error) {
 	var sb []byte
 	if sb, e = exec.Command("bash", "-c", "df").CombinedOutput(); e == nil {
@@ -39,7 +39,7 @@ func (*LinuxHwTools) GetDiskSpace(mnt ...string) (usage float64, free, used, tot
 	return
 }
 
-// Parses info from /proc/pid/io:
+// GetIOStats Parses info from /proc/pid/io:
 //rchar: 4086576068
 //wchar: 5667644758219
 //syscr: 18960
@@ -60,7 +60,7 @@ func (*LinuxHwTools) GetIOStats(pid int) (m map[string]int64) {
 	return
 }
 
-// Simple collects IO statistics for t time period
+// CollectIOUsageStats Simple collects IO statistics for t time period
 func (l *LinuxHwTools) CollectIOUsageStats(pid int, t time.Duration) (m map[string]int64) {
 	a := l.GetIOStats(pid)
 	time.Sleep(t)
