@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -117,6 +118,9 @@ func (*LinuxHwTools) GetCPUSample() (idle, total uint64, e error) {
 }
 
 func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64, e error) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
 	var lines []string
 	if e, lines = ReadFileByLines("/proc/meminfo"); e == nil {
 	a:
@@ -139,6 +143,7 @@ func (*LinuxHwTools) GetRamUsage() (usage float64, available, used, total int64,
 				}
 			}
 		}
+		available = available + int64(m.HeapIdle)
 		used = total - available
 		usage = float64(used) / float64(total)
 	} //
