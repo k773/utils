@@ -216,7 +216,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(taskType, websiteKey, websiteUrl, resp)
+		antiCaptchaResponse, e = a.waitForResponse(taskType, websiteKey+"/"+s, websiteUrl, resp)
 	}
 	return
 }
@@ -241,7 +241,7 @@ func (a *AntiCaptcha) SolveImageCaptcha(img []byte) (antiCaptchaResponse AntiCap
 	if r != nil {
 		_ = r.Body.Close()
 
-		antiCaptchaResponse, e = a.waitForResponse(antiCaptchaTypeImageToText, "none(image)", "none(imege)", resp)
+		antiCaptchaResponse, e = a.waitForResponse(antiCaptchaTypeImageToText, "none(image)", "none(image)", resp)
 	}
 	return
 }
