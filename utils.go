@@ -13,6 +13,8 @@ import (
 	"github.com/SpencerSharkey/gomc/query"
 	"github.com/parnurzeal/gorequest"
 	"github.com/syndtr/goleveldb/leveldb"
+	"path/filepath"
+	"sort"
 	"strings"
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
@@ -139,6 +141,35 @@ func PressEnterToExit(msg ...interface{}) {
 func PrintAndExit(msg ...interface{}) {
 	fmt.Println(msg...)
 	os.Exit(0)
+}
+
+func RemoveOverflowFiles(path string, overflowCount int) error {
+	var filesDates []int64
+	var filesMap = map[int64][]string{}
+	if err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			filesDates = append(filesDates, info.ModTime().Unix())
+			filesMap[info.ModTime().Unix()] = append(filesMap[info.ModTime().Unix()], path)
+		}
+		return err
+	}); err != nil {
+		return err
+	}
+
+	if len(filesDates) > overflowCount {
+		sort.Slice(filesDates, func(i, j int) bool {
+			return filesDates[i] > filesDates[j]
+		})
+
+		for i := overflowCount; i < len(filesDates); i++ {
+			for _, path := range filesMap[filesDates[i]] {
+				if err := os.Remove(path); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func JoinErrors(e1 ...error) (e2 error) {
