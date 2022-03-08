@@ -2,8 +2,10 @@ package utils
 
 import (
 	"bufio"
+	"context"
 	"crypto/md5"
 	"crypto/sha256"
+	"crypto/sha512"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -113,7 +115,19 @@ type ProxyData struct {
 }
 
 func (p ProxyData) String() string {
-	return p.ProxyType + "://" + p.ProxyLogin + ":" + p.ProxyPassword + "@" + p.ProxyAddress + ":" + strconv.Itoa(p.ProxyPort)
+	return p.ProxyType + "://" + p.StringNoType()
+}
+
+func (p *ProxyData) StringNoType() string {
+	var a = p.ProxyAddress + ":" + strconv.Itoa(p.ProxyPort)
+	if p.ProxyLogin != "" {
+		if p.ProxyPassword != "" {
+			a = p.ProxyLogin + ":" + p.ProxyPassword + "@" + a
+		} else {
+			a = p.ProxyLogin + "@" + a
+		}
+	}
+	return a
 }
 
 func RepeatStringToSlice(s string, n int) []string {
@@ -296,6 +310,24 @@ func ReverseString(s string) string {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
 	return string(runes)
+}
+
+func Sha512B2B(data []byte) []byte {
+	h := sha512.New()
+	h.Write(data)
+	return h.Sum(nil)
+}
+
+func Sha512S2B(text string) []byte {
+	return Sha512B2B([]byte(text))
+}
+
+func Sha512B2H(data []byte) string {
+	return hex.EncodeToString(Sha512B2B(data))
+}
+
+func Sha512S2H(text string) string {
+	return hex.EncodeToString(Sha512B2B([]byte(text)))
 }
 
 func Sha256B2B(data []byte) []byte {
@@ -506,6 +538,32 @@ func ContainsString(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
 			return true
+		}
+	}
+	return false
+}
+
+func ContainsSubSliceStr(parent []string, child []string) bool {
+	var c = true
+p:
+	for _, a := range child {
+		for _, b := range parent {
+			if a == b {
+				continue p
+			}
+		}
+		c = false
+		break
+	}
+	return c
+}
+
+func ContainsAnyOfSubSliceStr(parent, child []string) bool {
+	for _, el := range parent {
+		for _, ch := range child {
+			if ch == el {
+				return true
+			}
 		}
 	}
 	return false
@@ -890,3 +948,63 @@ func GetGoogleDriveDocumentContent(ses *gorequest.SuperAgent, docID string) (str
 //	proc := dialog.DllObject.NewProc("TextInputDialog")
 //	return proc.Call(U(title), U(label), U(buttonText))
 //}
+
+func CommitTransaction(tx *sql.Tx, log func(msg string), n int) (e error) {
+	for i := 0; i == -1 || i < n; i++ {
+		if e = tx.Commit(); e == nil {
+			break
+		} else {
+			log("tx commit error: " + e.Error())
+			time.Sleep(time.Second)
+		}
+	}
+	return e
+}
+
+func RestartTransaction(db *sql.DB, tx *sql.Tx, log func(msg string), n int) (txn *sql.Tx, e error) {
+	for i := 0; n == -1 || i < n; i++ {
+		if e = tx.Commit(); e == nil {
+			for i := 0; n == -1 || i < n; i++ {
+				if txn, e = db.Begin(); e == nil {
+					break
+				} else {
+					log("tx begin error: " + e.Error())
+					time.Sleep(time.Second)
+				}
+			}
+			break
+		} else {
+			log("tx commit error: " + e.Error())
+			time.Sleep(time.Second)
+		}
+	}
+	return txn, e
+}
+
+func NewSimpleLog(prefix string, logTime bool) func(string2 string) {
+	return func(str string) {
+		var a string
+		if logTime {
+			a += "[" + time.Now().Format("15:04:05") + "]"
+		}
+		fmt.Println(a, prefix, ":", str)
+	}
+}
+
+func SleepWithContext(ctx context.Context, duration time.Duration) (e error) {
+	t := time.NewTimer(duration)
+	select {
+	case <-ctx.Done():
+		break
+	case <-t.C:
+		break
+	}
+	t.Stop()
+	return ctx.Err()
+}
+
+func ReadLine(a io.Reader) string {
+	reader := bufio.NewReader(a)
+	text, _ := reader.ReadString('\n')
+	return text
+}

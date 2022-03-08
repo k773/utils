@@ -25,11 +25,11 @@ func (c *connection) StartPinging() {
 }
 
 func (c *connection) SendPing() (e error) {
-	return c.Write(0, nil)
+	return c.Write(1, nil)
 }
 
 func (c *connection) SendPong() (e error) {
-	return c.Write(1, nil)
+	return c.Write(2, nil)
 }
 
 func (c *connection) OnPing(data *bytes.Buffer) (e error) {

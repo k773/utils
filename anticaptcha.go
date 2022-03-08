@@ -169,7 +169,7 @@ func (a *AntiCaptcha) SolveRecaptchaV2(websiteUrl, websiteKey string, proxyData 
 				UserAgent:     proxyData.UserAgent,
 				Cookies:       proxyData.Cookies,
 			},
-			SoftID:       0,
+			SoftID:       994,
 			LanguagePool: "en",
 		}).EndBytes()
 
@@ -208,7 +208,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(websiteUrl, websiteKey, s strin
 				UserAgent:     proxyData.UserAgent,
 				Cookies:       proxyData.Cookies,
 			},
-			SoftID:       0,
+			SoftID:       994,
 			LanguagePool: "en",
 		}).EndBytes()
 
@@ -235,6 +235,7 @@ func (a *AntiCaptcha) SolveImageCaptcha(img []byte) (antiCaptchaResponse AntiCap
 				MinLength: 0,
 				MaxLength: 0,
 			},
+			SoftID: 994,
 		}).EndBytes()
 
 	e = errors.New("nil response")

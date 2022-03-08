@@ -105,8 +105,8 @@ func (c *connection) Run() {
 		var buf *bytes.Buffer
 		if msgID, buf, e = c.readPacket(); e == nil {
 			// Ping-pong
-			if msgID == 0 || msgID == 1 {
-				if msgID == 0 { // Ping received
+			if msgID == 1 || msgID == 2 {
+				if msgID == 1 { // Ping received
 					e = c.OnPing(buf)
 				} else {
 					c.OnPong(buf)
@@ -114,10 +114,12 @@ func (c *connection) Run() {
 				continue
 			}
 			c.cb.OnMessage(msgID, buf)
+		} else {
+			println("packet read error: " + e.Error())
 		}
 	}
 	c.Close(e)
-	//println("Run(): finished")
+	println("Run(): finished")
 }
 
 func (c *connection) readPacket() (msgID byte, buf *bytes.Buffer, e error) {
