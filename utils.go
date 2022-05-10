@@ -33,6 +33,22 @@ import (
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 const serverAddr = "http://127.0.0.1:8973"
 
+type ints interface {
+	int | int8 | int16 | int32 | int64
+}
+
+type floats interface {
+	float32 | float64
+}
+
+type uints interface {
+	uint | uint8 | uint16 | uint32 | uint64
+}
+
+type complexes interface {
+	complex64 | complex128
+}
+
 type ScUtils struct {
 }
 
@@ -87,21 +103,23 @@ func Marshal(a interface{}) (b []byte) {
 	return
 }
 
-type RateLimiter struct {
-	t *time.Ticker
+func WaitChanAny[T comparable, T2 comparable](ch1 <-chan T, ch2 <-chan T2) {
+	select {
+	case <-ch1:
+		break
+	case <-ch2:
+		break
+	}
 }
 
-func NewRateLimiter(d time.Duration) *RateLimiter {
-	return &RateLimiter{t: time.NewTicker(d)}
-}
-
-func (r *RateLimiter) Wait() {
-	<-r.t.C
-	return
-}
-
-func (r *RateLimiter) Done() {
-	r.t.Stop()
+func WaitChanAnyAlwaysTrue[T comparable, T2 comparable](ch1 <-chan T, ch2 <-chan T2) bool {
+	select {
+	case <-ch1:
+		break
+	case <-ch2:
+		break
+	}
+	return true
 }
 
 type ProxyData struct {
@@ -199,14 +217,7 @@ func JoinErrors(e1 ...error) (e2 error) {
 	return
 }
 
-func AbsInt(a int) int {
-	if a >= 0 {
-		return a
-	}
-	return -a
-}
-
-func AbsInt64(a int64) int64 {
+func Abs[T ints | floats](a T) T {
 	if a >= 0 {
 		return a
 	}
@@ -525,7 +536,7 @@ func DbHas(db *leveldb.DB, key string) bool {
 	return has
 }
 
-func ContainsInt(s []int, e int) bool {
+func Contains[T comparable](s []T, e T) bool {
 	for _, a := range s {
 		if a == e {
 			return true
@@ -534,16 +545,7 @@ func ContainsInt(s []int, e int) bool {
 	return false
 }
 
-func ContainsString(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-func ContainsSubSliceStr(parent []string, child []string) bool {
+func ContainsSubSlice[T comparable](parent, child []T) bool {
 	var c = true
 p:
 	for _, a := range child {
@@ -558,7 +560,7 @@ p:
 	return c
 }
 
-func ContainsAnyOfSubSliceStr(parent, child []string) bool {
+func ContainsAnyOfSubSlice[T comparable](parent, child []T) bool {
 	for _, el := range parent {
 		for _, ch := range child {
 			if ch == el {
@@ -852,7 +854,7 @@ func fromHexChar(c byte) (byte, bool) {
 	return 0, false
 }
 
-func AreStringArraysEqual(a, b []string, orderIsImportant bool) bool {
+func AreArraysEqual[T comparable](a, b []T, orderIsImportant bool) bool {
 	// If one is nil, the other must also be nil.
 	if (a == nil) != (b == nil) {
 		return false
@@ -870,13 +872,183 @@ func AreStringArraysEqual(a, b []string, orderIsImportant bool) bool {
 		}
 	} else {
 		for _, item := range a {
-			if !ContainsString(b, item) {
+			if !Contains(b, item) {
 				return false
 			}
 		}
 	}
 
 	return true
+}
+
+func AreArraysEqualF[T, T2 comparable](a []T, b []T2, orderIsImportant bool, equal func(i, j int) bool) bool {
+	// If one is nil, the other must also be nil.
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	if orderIsImportant {
+		for i := range a {
+			if !equal(i, i) {
+				return false
+			}
+		}
+	} else {
+		for i := range a {
+			var anyF bool
+			for j := i; j < len(b); j++ {
+				if anyF = equal(i, j); anyF {
+					break
+				}
+			}
+			if !anyF {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func Array1ContainsOnlyOfArray2[T comparable](a, b []T) bool {
+	var m = make(map[T]struct{}, len(b))
+	for _, v := range b {
+		m[v] = struct{}{}
+	}
+	for _, v := range a {
+		if _, h := m[v]; !h {
+			return false
+		}
+	}
+	return true
+}
+
+func Array1ContainsOnlyKeysOfMap2[T comparable, V comparable](a []T, m map[T]V) bool {
+	for _, v := range a {
+		if _, h := m[v]; !h {
+			return false
+		}
+	}
+	return true
+}
+
+func ArrayAny[T comparable](a []T, f func(T) bool) bool {
+	for _, b := range a {
+		if f(b) {
+			return true
+		}
+	}
+	return false
+}
+
+func MapAnyKey[T comparable, T2 comparable](a map[T]T2, f func(T) bool) bool {
+	for k := range a {
+		if f(k) {
+			return true
+		}
+	}
+	return false
+}
+
+func MapAnyValue[T comparable, T2 comparable](a map[T]T2, f func(T2) bool) bool {
+	for _, v := range a {
+		if f(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func MapAnyKeyValue[T comparable, T2 comparable](a map[T]T2, f func(T, T2) bool) bool {
+	for k, v := range a {
+		if f(k, v) {
+			return true
+		}
+	}
+	return false
+}
+
+func If[T comparable](a bool, ifTrue T, ifFalse T) T {
+	if a {
+		return ifTrue
+	}
+	return ifFalse
+}
+
+func FormatBytesSize(b, precision int) string {
+	switch {
+	case b < 1<<10:
+		return strconv.Itoa(b) + " B"
+	case b < 1<<20:
+		return strconv.FormatFloat(float64(b)/float64(1<<10), 'f', precision, 64) + " KB"
+	case b < 1<<30:
+		return strconv.FormatFloat(float64(b)/float64(1<<20), 'f', precision, 64) + " MB"
+	case b < 1<<40:
+		return strconv.FormatFloat(float64(b)/float64(1<<30), 'f', precision, 64) + " GB"
+	case b < 1<<50:
+		return strconv.FormatFloat(float64(b)/float64(1<<40), 'f', precision, 64) + " TB"
+	case b < 1<<60:
+		return strconv.FormatFloat(float64(b)/float64(1<<50), 'f', precision, 64) + " PB"
+	default:
+		return strconv.FormatFloat(float64(b)/float64(1<<60), 'f', precision, 64) + " EB"
+	}
+}
+
+func FormatBitsSize(b, precision int) string {
+	a := FormatBytesSize(b, precision)
+	return a[:len(a)-1] + strings.ToLower(string(a[len(a)-1]))
+}
+
+func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
+	var ret = make([]V, len(m))
+	i := 0
+	for _, v := range m {
+		ret[i] = v
+	}
+	return ret
+}
+
+func PadLeft(s string, n int, ch uint8) string {
+	var l = len(s)
+	if l < n {
+		var ret = make([]byte, n)
+		d := n - l
+		copy(ret[d:], s)
+		MemsetRepeat(ret, d, ch)
+		//for i := 0; i != d; i++ {
+		//	ret[i] = ch
+		//}
+		return string(ret)
+	}
+	return s
+}
+
+func MemsetRepeat[T comparable](a []T, n int, v T) {
+	if len(a) == 0 {
+		return
+	}
+	a[0] = v
+	for bp := 1; bp < n; bp *= 2 {
+		copy(a[bp:], a[:bp])
+	}
+}
+
+func Copy[T comparable](a []T) []T {
+	var c = make([]T, len(a))
+	copy(c, a)
+	return c
+}
+
+func Slice2HasMap[T comparable](a []T) map[T]struct{} {
+	var ret = make(map[T]struct{}, len(a))
+	for _, v := range a {
+		ret[v] = struct{}{}
+	}
+	return ret
 }
 
 func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDelay int64, noProxyIp, proxyIp string, e error) {

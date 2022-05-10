@@ -21,7 +21,7 @@ func (*LinuxHwTools) GetDiskSpace(mnt ...string) (usage float64, free, used, tot
 	if sb, e = exec.Command("bash", "-c", "df").CombinedOutput(); e == nil {
 		for _, line := range strings.Split(string(sb), "\n") {
 			if s := strings.Fields(line); len(s) == 6 {
-				if ContainsString(mnt, s[5]) {
+				if Contains(mnt, s[5]) {
 					a, _ := strconv.ParseInt(s[1], 10, 64) // total
 					b, _ := strconv.ParseInt(s[2], 10, 64) // used
 					c, _ := strconv.ParseInt(s[3], 10, 64) // available
