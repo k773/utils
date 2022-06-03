@@ -172,6 +172,11 @@ func NewRat(a, n int) *Rat {
 	Tools
 */
 
+func (r *Rat) SetDynamicPoint(b bool) *Rat {
+	r.DynamicPoint = b
+	return r
+}
+
 func (r *Rat) Clone() *Rat {
 	var r2 = *r
 	return &r2
@@ -204,6 +209,11 @@ func (r *Rat) ToPow(pow int) *Rat {
 	} else if r.N < pow {
 		return r.GrowTo(pow)
 	}
+	return r
+}
+
+func (r *Rat) SetPoint(n int) *Rat {
+	r.N = n
 	return r
 }
 
@@ -296,8 +306,16 @@ func (r *Rat) AddToThisIfNotNegative(r2 *Rat) {
 }
 
 /*
-	Sub
+	Math
 */
+
+func (r *Rat) Abs() *Rat {
+	r = r.Clone()
+	if r.A < 0 {
+		r.A = -r.A
+	}
+	return r
+}
 
 func (r *Rat) Sub(r2 *Rat) *Rat {
 	r = r.Clone()

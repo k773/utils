@@ -75,8 +75,18 @@ func (s *SafeValueTools[T]) SetIfEquals(v, ifEquals T) bool {
 	return r
 }
 
-type SafeNumericValueTools[T ints | uints | floats] struct {
+type SafeNumericValueTools[T Ints | Uints | Floats] struct {
 	SafeValue[T]
+}
+
+func NewSafeNumericValueTools[T Ints | Uints | Floats]() *SafeNumericValueTools[T] {
+	return &SafeNumericValueTools[T]{}
+}
+
+func (s *SafeNumericValueTools[T]) Add(v T) {
+	s.RLock()
+	defer s.RUnlock()
+	s.V += v
 }
 
 func (s *SafeNumericValueTools[T]) Get() T {
@@ -141,12 +151,12 @@ func (s *SafeNumericValueTools[T]) SetIfLesserOrEquals(v, ifLesserOrEqualsThanTh
 	return r
 }
 
-type SafeMap[K comparable, V comparable] struct {
+type SafeMap[K comparable, V any] struct {
 	M map[K]V
 	unexportedMutex
 }
 
-func NewSafeMap[K, V comparable]() *SafeMap[K, V] {
+func NewSafeMap[K comparable, V any]() *SafeMap[K, V] {
 	return &SafeMap[K, V]{M: make(map[K]V)}
 }
 
@@ -197,8 +207,8 @@ func (s *SafeMapGetSetHas[K, V]) Has(k K, externalLock bool) bool {
 
 func (s *SafeMapGetSetHas[K, V]) Set(k K, v V, externalLock bool) {
 	if !externalLock {
-		s.s.RLock()
-		defer s.s.RUnlock()
+		s.s.Lock()
+		defer s.s.Unlock()
 	}
 
 	s.M[k] = v
@@ -206,8 +216,8 @@ func (s *SafeMapGetSetHas[K, V]) Set(k K, v V, externalLock bool) {
 
 func (s *SafeMapGetSetHas[K, V]) Delete(k K, externalLock bool) {
 	if !externalLock {
-		s.s.RLock()
-		defer s.s.RUnlock()
+		s.s.Lock()
+		defer s.s.Unlock()
 	}
 
 	delete(s.M, k)
@@ -218,13 +228,37 @@ type SafeMapL2[K, K2, V comparable] struct {
 	unexportedMutex
 }
 
-type SafeArray[T comparable] struct {
+/*
+	Safe array
+*/
+
+type SafeArray[T any] struct {
 	L []T
 	unexportedMutex
 }
 
+func NewSafeArray[T any]() *SafeArray[T] {
+	return new(SafeArray[T])
+}
+
+func NewSafeArrayFrom[T any](arr []T) *SafeArray[T] {
+	return &SafeArray[T]{L: arr}
+}
+
+/*
+	Safe array tools
+*/
+
 type SafeArrayTools[T comparable] struct {
 	SafeArray[T]
+}
+
+func NewSafeArrayTools[T comparable]() *SafeArrayTools[T] {
+	return new(SafeArrayTools[T])
+}
+
+func NewSafeArrayToolsFrom[T comparable](arr []T) *SafeArrayTools[T] {
+	return &SafeArrayTools[T]{SafeArray: SafeArray[T]{L: arr}}
 }
 
 func (s *SafeArrayTools[T]) Get(i int) T {
@@ -243,7 +277,7 @@ func (s *SafeArrayTools[T]) GetRandom() (T, error) {
 	return s.SafeArray.L[rand.Intn(len(s.SafeArray.L))], nil
 }
 
-func (s *SafeArrayTools[T]) Fill(a []T) {
+func (s *SafeArrayTools[T]) Set(a []T) {
 	s.SafeArray.Lock()
 	defer s.SafeArray.Unlock()
 	s.SafeArray.L = a
@@ -252,9 +286,7 @@ func (s *SafeArrayTools[T]) Fill(a []T) {
 func (s *SafeArrayTools[T]) Copy() []T {
 	s.SafeArray.Lock()
 	defer s.SafeArray.Unlock()
-	var a = make([]T, len(s.SafeArray.L))
-	copy(a, s.SafeArray.L)
-	return a
+	return Copy(s.L)
 }
 
 func (s *SafeArrayTools[T]) Marshal() []byte {
@@ -279,39 +311,30 @@ func (s *SafeArrayTools[T]) AppendNoLock(s1 T) {
 	s.SafeArray.L = append(s.SafeArray.L, s1)
 }
 
-func (s *SafeArrayTools[T]) RemoveByValue(s1 T) {
+func (s *SafeArrayTools[T]) RemoveByValue(s1 T, single bool) {
 	for i, v := range s.SafeArray.L {
 		if v == s1 {
 			s.SafeArray.L[i] = s.SafeArray.L[len(s.SafeArray.L)-1]
 			s.SafeArray.L = s.SafeArray.L[:len(s.SafeArray.L)-1]
-			break
+			if single {
+				break
+			}
 		}
 	}
 }
 
-func (s *SafeArrayTools[T]) GenerateValueToNothingMap() map[T]struct{} {
+func (s *SafeArrayTools[T]) ToHasMap() map[T]struct{} {
 	s.SafeArray.Lock()
 	defer s.SafeArray.Unlock()
 
-	var m = map[T]struct{}{}
-	for _, v := range s.SafeArray.L {
-		m[v] = struct{}{}
-	}
-	return m
+	return Slice2HasMap(s.L)
 }
 
-func (s *SafeArrayTools[T]) GenerateValueToNothingMapExcludeEmpty() map[T]struct{} {
+func (s *SafeArrayTools[T]) ToHasMapExcludeEmpty() map[T]struct{} {
 	s.SafeArray.Lock()
 	defer s.SafeArray.Unlock()
 
-	var m = map[T]struct{}{}
-	var defValue T
-	for _, v := range s.SafeArray.L {
-		if v != defValue {
-			m[v] = struct{}{}
-		}
-	}
-	return m
+	return Slice2HasMapExcludeEmpty(s.L)
 }
 
 type SafeUniqueArray[T comparable] struct {

@@ -18,6 +18,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
+
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
 	"io"
@@ -33,15 +35,15 @@ import (
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 const serverAddr = "http://127.0.0.1:8973"
 
-type ints interface {
+type Ints interface {
 	int | int8 | int16 | int32 | int64
 }
 
-type floats interface {
+type Floats interface {
 	float32 | float64
 }
 
-type uints interface {
+type Uints interface {
 	uint | uint8 | uint16 | uint32 | uint64
 }
 
@@ -217,7 +219,7 @@ func JoinErrors(e1 ...error) (e2 error) {
 	return
 }
 
-func Abs[T ints | floats](a T) T {
+func Abs[T Ints | Floats](a T) T {
 	if a >= 0 {
 		return a
 	}
@@ -321,6 +323,13 @@ func ReverseString(s string) string {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
 	return string(runes)
+}
+
+func Reverse[T any](s []T) []T {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+	return s
 }
 
 func Sha512B2B(data []byte) []byte {
@@ -537,6 +546,15 @@ func DbHas(db *leveldb.DB, key string) bool {
 }
 
 func Contains[T comparable](s []T, e T) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func ContainsF[T comparable](s []T, e T) bool {
 	for _, a := range s {
 		if a == e {
 			return true
@@ -900,7 +918,7 @@ func AreArraysEqualF[T, T2 comparable](a []T, b []T2, orderIsImportant bool, equ
 	} else {
 		for i := range a {
 			var anyF bool
-			for j := i; j < len(b); j++ {
+			for j := 0; j < len(b); j++ {
 				if anyF = equal(i, j); anyF {
 					break
 				}
@@ -945,6 +963,25 @@ func ArrayAny[T comparable](a []T, f func(T) bool) bool {
 	return false
 }
 
+// SlicesSubtract returns array of elements that exist in the array 1 but do not exist in the array 2
+func SlicesSubtract[T comparable](arr1, arr2 []T) []T {
+	var a []T
+	var has = make(map[T]struct{})
+	for _, el := range arr2 {
+		has[el] = struct{}{}
+	}
+	for _, el := range arr1 {
+		if _, h := has[el]; !h {
+			a = append(a, el)
+		}
+	}
+	return a
+}
+
+func LastElement[T any](arr []T) T {
+	return arr[len(arr)-1]
+}
+
 func MapAnyKey[T comparable, T2 comparable](a map[T]T2, f func(T) bool) bool {
 	for k := range a {
 		if f(k) {
@@ -972,35 +1009,66 @@ func MapAnyKeyValue[T comparable, T2 comparable](a map[T]T2, f func(T, T2) bool)
 	return false
 }
 
-func If[T comparable](a bool, ifTrue T, ifFalse T) T {
+// MapSlice will call f() for each index of the provided slice and combine the results into a single array.
+// Return false if no value needs to be inserted.
+func MapSlice[T, resT any](in []T, f func(i int) (resT, bool)) []resT {
+	var res = make([]resT, 0, len(in))
+	for i := range in {
+		v, do := f(i)
+		if do {
+			res = append(res, v)
+		}
+	}
+	return res
+}
+
+// MapMap will call f() for each keypair of the provided map and combine the results into a single map.
+// Return false if no value needs to be inserted.
+func MapMap[K1 comparable, V1 any, K2 comparable, V2 any](m map[K1]V1, f func(K1, V1) (K2, V2, bool)) map[K2]V2 {
+	var res = make(map[K2]V2, len(m))
+	for k, v := range m {
+		k1, v1, do := f(k, v)
+		if do {
+			res[k1] = v1
+		}
+	}
+	return res
+}
+
+// MapSlice2Map will call f() for each index of the provided slice and combine the results into a single map.
+// Return false if no value needs to be inserted.
+func MapSlice2Map[SliceT any, MapK comparable, MapV any](s []SliceT, f func(i int) (MapK, MapV, bool)) map[MapK]MapV {
+	var res = make(map[MapK]MapV, len(s))
+	for i := range s {
+		k1, v1, do := f(i)
+		if do {
+			res[k1] = v1
+		}
+	}
+	return res
+}
+
+func Slice2String[T any](s []T) string {
+	return string(Marshal(&s))
+}
+
+func If[T any](a bool, ifTrue T, ifFalse T) T {
 	if a {
 		return ifTrue
 	}
 	return ifFalse
 }
 
-func FormatBytesSize(b, precision int) string {
-	switch {
-	case b < 1<<10:
-		return strconv.Itoa(b) + " B"
-	case b < 1<<20:
-		return strconv.FormatFloat(float64(b)/float64(1<<10), 'f', precision, 64) + " KB"
-	case b < 1<<30:
-		return strconv.FormatFloat(float64(b)/float64(1<<20), 'f', precision, 64) + " MB"
-	case b < 1<<40:
-		return strconv.FormatFloat(float64(b)/float64(1<<30), 'f', precision, 64) + " GB"
-	case b < 1<<50:
-		return strconv.FormatFloat(float64(b)/float64(1<<40), 'f', precision, 64) + " TB"
-	case b < 1<<60:
-		return strconv.FormatFloat(float64(b)/float64(1<<50), 'f', precision, 64) + " PB"
-	default:
-		return strconv.FormatFloat(float64(b)/float64(1<<60), 'f', precision, 64) + " EB"
+func Avg[T Ints | Uints | Floats | time.Duration](val ...T) float64 {
+	if len(val) == 0 {
+		return 0
 	}
-}
 
-func FormatBitsSize(b, precision int) string {
-	a := FormatBytesSize(b, precision)
-	return a[:len(a)-1] + strings.ToLower(string(a[len(a)-1]))
+	var a T
+	for _, v := range val {
+		a += v
+	}
+	return float64(a) / float64(len(val))
 }
 
 func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
@@ -1010,21 +1078,6 @@ func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
 		ret[i] = v
 	}
 	return ret
-}
-
-func PadLeft(s string, n int, ch uint8) string {
-	var l = len(s)
-	if l < n {
-		var ret = make([]byte, n)
-		d := n - l
-		copy(ret[d:], s)
-		MemsetRepeat(ret, d, ch)
-		//for i := 0; i != d; i++ {
-		//	ret[i] = ch
-		//}
-		return string(ret)
-	}
-	return s
 }
 
 func MemsetRepeat[T comparable](a []T, n int, v T) {
@@ -1043,12 +1096,170 @@ func Copy[T comparable](a []T) []T {
 	return c
 }
 
+func SliceL22AnySliceL2[T any](a [][]T) [][]any {
+	var ret = make([][]any, len(a))
+	for i := range a {
+		ret[i] = Slice2AnySlice(a[i])
+	}
+	return ret
+}
+
+func Slice2AnySlice[T any](a []T) []any {
+	var ret = make([]any, len(a))
+	for i := range a {
+		ret[i] = a[i]
+	}
+	return ret
+}
+
+// Append is slightly more effective than go's append(): 10k+10k el.: {"go": 12000ns, "utils": 8000ns}
+func Append[T any](a1, a2 []T) []T {
+	var a3 = make([]T, len(a1)+len(a2))
+	copy(a3, a1)
+	copy(a3[len(a1):], a2)
+	return a3
+}
+
+func MapOr[T comparable, T2 any](m1, m2 map[T]T2) map[T]T2 {
+	var m3 = make(map[T]T2, If(len(m2) > len(m1), len(m2), len(m1)))
+
+	for k, el := range m1 {
+		m3[k] = el
+	}
+	for k, el := range m2 {
+		if _, h := m3[k]; !h {
+			m3[k] = el
+		}
+	}
+	return m3
+}
+
 func Slice2HasMap[T comparable](a []T) map[T]struct{} {
 	var ret = make(map[T]struct{}, len(a))
 	for _, v := range a {
 		ret[v] = struct{}{}
 	}
 	return ret
+}
+
+func Slice2HasMapExcludeEmpty[T comparable](a []T) map[T]struct{} {
+	var ret = make(map[T]struct{}, len(a))
+	var def T
+	for _, v := range a {
+		if v != def {
+			ret[v] = struct{}{}
+		}
+	}
+	return ret
+}
+
+func SliceEvery[T comparable](a []T, f func(i int) bool) bool {
+	for i := range a {
+		if !f(i) {
+			return false
+		}
+	}
+
+	return len(a) != 0
+}
+
+func PrintAsBinaryAsBigEndian(bytes []byte) {
+	for i := len(bytes) - 1; i >= 0; i-- {
+		for j := 0; j < 8; j++ {
+			zeroOrOne := bytes[i] >> (7 - j) & 1
+			fmt.Printf("%c", '0'+zeroOrOne)
+		}
+		fmt.Print(" ")
+	}
+	fmt.Println()
+}
+
+func PrintAsBinaryAsLittleEndian(bytes []byte) {
+	for i := 0; i < len(bytes); i++ {
+		for j := 7; j >= 0; j-- {
+			zeroOrOne := bytes[i] >> (7 - j) & 1
+			fmt.Printf("%c", '0'+zeroOrOne)
+		}
+		fmt.Print(" ")
+	}
+	fmt.Println()
+}
+
+func Bool2Int(b bool) uint8 {
+	var n uint8
+	if b {
+		n = 1
+	}
+	return n
+}
+
+func SplitNumberIntoPartsByOverflow[T Ints | Uints](num, overflow T) [][2]T {
+	var whole = int(num / overflow)
+	var mod = num%overflow != 0
+
+	var l = make([][2]T, whole+int(Bool2Int(mod)))
+	for i := 0; i < whole; i++ {
+		l[i] = [2]T{overflow * T(i), overflow * T(i+1)}
+	}
+	if mod {
+		l[len(l)-1] = [2]T{overflow * T(whole), num}
+	}
+	return l
+}
+
+// SplitNumberIntoParts splits number into n equal parts. If mod:=num%n != 0, the last element will receive all modulo.
+// Will panic if num < n.
+// Sample: [0 2] [2 4] [4 6]
+func SplitNumberIntoParts[T Ints | Uints](num T, n int) [][2]T {
+	var l = make([][2]T, n)
+	part := num / T(n)
+	for i := range l {
+		l[i] = [2]T{part * T(i), part * T(i+1)}
+	}
+	if mod := num % T(n); mod != 0 {
+		le := len(l)
+		if le != 0 {
+			l[le-1][1] += mod
+		}
+	}
+	return l
+}
+
+func SumArrFunc[T Ints | Uints | Floats](arrayLength int, sum func(i int) T) T {
+	var b T
+	for i := 0; i < arrayLength; i++ {
+		b += sum(i)
+	}
+	return b
+}
+
+func ProgressCalculator[T Ints | Uints | Floats](total T) func(add T) (total, progress T, abs float64) {
+	var progress T
+	var s sync.Mutex
+	return func(add T) (_, _ T, _ float64) {
+		s.Lock()
+		defer s.Unlock()
+		progress += add
+		return total, progress, If(total == 0, 100.0, float64(progress)/float64(total))
+	}
+}
+
+func Clamp[T Ints | Uints | Floats](num, min, max T) T {
+	if num < min {
+		return min
+	} else if num > max {
+		return max
+	} else {
+		return num
+	}
+}
+
+func ParseIpFromIpPort(src string) string {
+	var i = strings.IndexByte(src, ':')
+	if i != -1 {
+		return src[:i]
+	}
+	return src
 }
 
 func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDelay int64, noProxyIp, proxyIp string, e error) {
