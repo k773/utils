@@ -11,9 +11,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SilverCory/golang_discord_rpc"
-	"github.com/SpencerSharkey/gomc/query"
-	"github.com/parnurzeal/gorequest"
+	"github.com/go-resty/resty"
+	//"github.com/SilverCory/golang_discord_rpc"
 	"github.com/syndtr/goleveldb/leveldb"
 	"path/filepath"
 	"sort"
@@ -499,17 +498,17 @@ func FindRegexNamedGroups(data, regex string) []string {
 	return namedGroups
 }
 
-func GetQueryServerPlayers(ip string) (bool, []string) {
-	req := query.NewRequest()
-	_ = req.Connect(ip)
-	response, _ := req.Full()
-
-	if response == nil { //Cant connect to server
-		return false, nil
-	}
-
-	return len(response.Players) > 0, response.Players
-}
+//func GetQueryServerPlayers(ip string) (bool, []string) {
+//	req := query.NewRequest()
+//	_ = req.Connect(ip)
+//	response, _ := req.Full()
+//
+//	if response == nil { //Cant connect to server
+//		return false, nil
+//	}
+//
+//	return len(response.Players) > 0, response.Players
+//}
 
 func BytesToBool(bytes []byte) bool {
 	ret, err := strconv.ParseBool(string(bytes))
@@ -685,51 +684,51 @@ func DecodeWindows1251(ba []uint8) []uint8 {
 //	return login, password, csrf
 //}
 
-//DEPRECATED
-func (ScUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
-	//Set user reputation
-	const pageUrl = "https://streamcraft.net/forum/user/reputation"
-
-	var Json reputationJson
-	Json.User = userId
-	Json.Reputation = count
-	Json.Token = csrf
-	JsonB, _ := json.Marshal(Json)
-
-	ses.Post(pageUrl).Send(string(JsonB)).End()
-}
-
-//DEPRECATED
-func (ScUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
-	//Get user id
-	const pageUrl = "https://streamcraft.net/user/"
-	const regexUserId = `<i class="fa fa-thumbs-down cursor-pointer" onclick="App\.sendRequest\('/forum/user/reputation', {user: (?P<id>.*), reputation: -1}\);"></i>`
-
-	_, page, _ := ses.Get(pageUrl + nickname).End()
-	id, _ := strconv.Atoi(FindGroup_(page, regexUserId)[1])
-	return id
-}
-
-//DEPRECATED
-func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
-	const regexThreads = `<a href="/forum/category/(?P<id>.*)"><i class="fa fa-level-down">`
-	const regexThreadsIds = `<a class="btn btn-primary btn-shadow float-right" href="/forum/discussion/create/(?P<id>.*)" role="button">`
-	const ForumUrl = "https://streamcraft.net/forum/"
-	const CategoryUrl = "https://streamcraft.net/forum/category/"
-
-	_, text, _ := ses.Get(ForumUrl).End()
-	temp := FindRegexText(text, regexThreads)
-	var threadsIds []string
-	for _, thread := range temp {
-		_, temp2, _ := ses.Get(CategoryUrl + thread).End()
-		temp3 := FindGroup_(temp2, regexThreadsIds)
-		if len(temp3) < 2 {
-			continue
-		}
-		threadsIds = append(threadsIds, temp3[1])
-	}
-	return threadsIds
-}
+////DEPRECATED
+//func (ScUtils) SetReputation(ses *gorequest.SuperAgent, csrf string, userId int, count int) {
+//	//Set user reputation
+//	const pageUrl = "https://streamcraft.net/forum/user/reputation"
+//
+//	var Json reputationJson
+//	Json.User = userId
+//	Json.Reputation = count
+//	Json.Token = csrf
+//	JsonB, _ := json.Marshal(Json)
+//
+//	ses.Post(pageUrl).Send(string(JsonB)).End()
+//}
+//
+////DEPRECATED
+//func (ScUtils) GetUserId(ses *gorequest.SuperAgent, nickname string) int {
+//	//Get user id
+//	const pageUrl = "https://streamcraft.net/user/"
+//	const regexUserId = `<i class="fa fa-thumbs-down cursor-pointer" onclick="App\.sendRequest\('/forum/user/reputation', {user: (?P<id>.*), reputation: -1}\);"></i>`
+//
+//	_, page, _ := ses.Get(pageUrl + nickname).End()
+//	id, _ := strconv.Atoi(FindGroup_(page, regexUserId)[1])
+//	return id
+//}
+//
+////DEPRECATED
+//func (ScUtils) ThreadsIdsParse(ses *gorequest.SuperAgent) []string {
+//	const regexThreads = `<a href="/forum/category/(?P<id>.*)"><i class="fa fa-level-down">`
+//	const regexThreadsIds = `<a class="btn btn-primary btn-shadow float-right" href="/forum/discussion/create/(?P<id>.*)" role="button">`
+//	const ForumUrl = "https://streamcraft.net/forum/"
+//	const CategoryUrl = "https://streamcraft.net/forum/category/"
+//
+//	_, text, _ := ses.Get(ForumUrl).End()
+//	temp := FindRegexText(text, regexThreads)
+//	var threadsIds []string
+//	for _, thread := range temp {
+//		_, temp2, _ := ses.Get(CategoryUrl + thread).End()
+//		temp3 := FindGroup_(temp2, regexThreadsIds)
+//		if len(temp3) < 2 {
+//			continue
+//		}
+//		threadsIds = append(threadsIds, temp3[1])
+//	}
+//	return threadsIds
+//}
 
 func (K773Utils) H2s(hex string) string {
 	src := []byte(hex)
@@ -744,86 +743,86 @@ func (K773Utils) S2h(text string) string {
 	return string(dst)
 }
 
-func (K773Utils) DecryptAes(data, key string) string {
-	var request requestStruct
-	request.What, request.Data, request.Key = "decrypt", data, key
-	marshalled, _ := json.Marshal(request)
-	_, response, _ := gorequest.New().Post(serverAddr).
-		Send(string(marshalled)).
-		End()
-	return response
-}
+//func (K773Utils) DecryptAes(data, key string) string {
+//	var request requestStruct
+//	request.What, request.Data, request.Key = "decrypt", data, key
+//	marshalled, _ := json.Marshal(request)
+//	_, response, _ := gorequest.New().Post(serverAddr).
+//		Send(string(marshalled)).
+//		End()
+//	return response
+//}
+//
+//func (K773Utils) EncryptAes(data, key string) string {
+//	var request requestStruct
+//	request.What, request.Data, request.Key = "encrypt", data, key
+//	marshalled, _ := json.Marshal(request)
+//	_, response, _ := gorequest.New().Post(serverAddr).
+//		Send(string(marshalled)).
+//		End()
+//	return response
+//}
 
-func (K773Utils) EncryptAes(data, key string) string {
-	var request requestStruct
-	request.What, request.Data, request.Key = "encrypt", data, key
-	marshalled, _ := json.Marshal(request)
-	_, response, _ := gorequest.New().Post(serverAddr).
-		Send(string(marshalled)).
-		End()
-	return response
-}
-
-func SetDiscordStatus(server ServerStruct, nickname string) {
-start:
-	win := discordrpc.NewRPCConnection("496419141201297413")
-	err := win.Open()
-	if err != nil {
-		//fmt.Println(err)
-		time.Sleep(5 * time.Second)
-		goto start
-	}
-
-	_, _ = win.Read()
-	//fmt.Println(err)
-	//fmt.Println(str)
-
-	//time.Sleep(time.Second * 3)
-	stamp := time.Now().Unix()
-
-	for {
-		//fmt.Println(os.Getpid())
-		presence := &discordrpc.CommandRichPresenceMessage{
-			CommandMessage: discordrpc.CommandMessage{Command: "SET_ACTIVITY"},
-			Args: &discordrpc.RichPresenceMessageArgs{
-				Pid: os.Getpid(),
-				Activity: &discordrpc.Activity{
-					Details:    "Играет на " + server.ServerName,
-					State:      "С ником " + nickname,
-					Instance:   false,
-					TimeStamps: &discordrpc.TimeStamps{StartTimestamp: stamp},
-					Assets: &discordrpc.Assets{
-						LargeText:    server.LargeText,
-						LargeImageID: server.LargeTextId,
-						SmallText:    "StreamCraft.Net",
-						SmallImageID: "discord",
-					},
-				},
-			},
-		}
-
-		presence.SetNonce()
-		data, err := json.Marshal(presence)
-
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		err = win.Write(string(data))
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		//str, err := win.Read()
-		//fmt.Println(err)
-		//fmt.Println(str)
-		//
-		//fmt.Println("---\nDone?")
-		time.Sleep(time.Second * 5)
-	}
-}
+//func SetDiscordStatus(server ServerStruct, nickname string) {
+//start:
+//	win := discordrpc.NewRPCConnection("496419141201297413")
+//	err := win.Open()
+//	if err != nil {
+//		//fmt.Println(err)
+//		time.Sleep(5 * time.Second)
+//		goto start
+//	}
+//
+//	_, _ = win.Read()
+//	//fmt.Println(err)
+//	//fmt.Println(str)
+//
+//	//time.Sleep(time.Second * 3)
+//	stamp := time.Now().Unix()
+//
+//	for {
+//		//fmt.Println(os.Getpid())
+//		presence := &discordrpc.CommandRichPresenceMessage{
+//			CommandMessage: discordrpc.CommandMessage{Command: "SET_ACTIVITY"},
+//			Args: &discordrpc.RichPresenceMessageArgs{
+//				Pid: os.Getpid(),
+//				Activity: &discordrpc.Activity{
+//					Details:    "Играет на " + server.ServerName,
+//					State:      "С ником " + nickname,
+//					Instance:   false,
+//					TimeStamps: &discordrpc.TimeStamps{StartTimestamp: stamp},
+//					Assets: &discordrpc.Assets{
+//						LargeText:    server.LargeText,
+//						LargeImageID: server.LargeTextId,
+//						SmallText:    "StreamCraft.Net",
+//						SmallImageID: "discord",
+//					},
+//				},
+//			},
+//		}
+//
+//		presence.SetNonce()
+//		data, err := json.Marshal(presence)
+//
+//		if err != nil {
+//			fmt.Println(err)
+//			continue
+//		}
+//
+//		err = win.Write(string(data))
+//		if err != nil {
+//			fmt.Println(err)
+//			continue
+//		}
+//
+//		//str, err := win.Read()
+//		//fmt.Println(err)
+//		//fmt.Println(str)
+//		//
+//		//fmt.Println("---\nDone?")
+//		time.Sleep(time.Second * 5)
+//	}
+//}
 
 func encodedLen(n int) int { return n * 2 }
 
@@ -1059,6 +1058,16 @@ func If[T any](a bool, ifTrue T, ifFalse T) T {
 	return ifFalse
 }
 
+func CallIf(a bool, ifTrue func(), ifFalse func()) {
+	if a {
+		if ifTrue != nil {
+			ifTrue()
+		}
+	} else if ifFalse != nil {
+		ifFalse()
+	}
+}
+
 func Avg[T Ints | Uints | Floats | time.Duration](val ...T) float64 {
 	if len(val) == 0 {
 		return 0
@@ -1262,44 +1271,42 @@ func ParseIpFromIpPort(src string) string {
 	return src
 }
 
-func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDelay int64, noProxyIp, proxyIp string, e error) {
-	var r gorequest.Response
+//func VerifyProxyConnection(sesNoProxy, sesProxy *gorequest.SuperAgent) (proxyDelay int64, noProxyIp, proxyIp string, e error) {
+//	var r gorequest.Response
+//
+//	t := UnixMs()
+//	r, noProxyIp, _ = sesNoProxy.Get("https://api64.ipify.org?format=plaintext").End()
+//	myPing := UnixMs() - t
+//	if r == nil {
+//		e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
+//	} else {
+//		_ = r.Body.Close()
+//
+//		t2 := UnixMs()
+//		r, proxyIp, _ = sesProxy.Get("https://api64.ipify.org?format=plaintext").End()
+//		proxyDelay = UnixMs() - t2 - myPing
+//		if r == nil {
+//			e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
+//		} else {
+//			_ = r.Body.Close()
+//
+//			if proxyIp == noProxyIp {
+//				e = errors.New("verifyProxyConnection: proxied ip response is equal to non-proxy ip response (" + noProxyIp + ")")
+//			}
+//		}
+//	}
+//
+//	return proxyDelay, noProxyIp, proxyIp, e
+//}
 
-	t := UnixMs()
-	r, noProxyIp, _ = sesNoProxy.Get("https://api64.ipify.org?format=plaintext").End()
-	myPing := UnixMs() - t
-	if r == nil {
-		e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
-	} else {
-		_ = r.Body.Close()
-
-		t2 := UnixMs()
-		r, proxyIp, _ = sesProxy.Get("https://api64.ipify.org?format=plaintext").End()
-		proxyDelay = UnixMs() - t2 - myPing
-		if r == nil {
-			e = errors.New("verifyProxyConnection: sesNoProxy timeout reached")
-		} else {
-			_ = r.Body.Close()
-
-			if proxyIp == noProxyIp {
-				e = errors.New("verifyProxyConnection: proxied ip response is equal to non-proxy ip response (" + noProxyIp + ")")
-			}
+func GetGoogleDriveDocumentContent(s *resty.Client, docID string) (string, error) {
+	r, e := s.R().Get(fmt.Sprintf("https://drive.google.com/uc?id=%v&export=download", docID))
+	if e == nil {
+		if r.IsError() {
+			e = errors.New(r.Status())
 		}
 	}
-
-	return proxyDelay, noProxyIp, proxyIp, e
-}
-
-func GetGoogleDriveDocumentContent(ses *gorequest.SuperAgent, docID string) (string, error) {
-	url := fmt.Sprintf("https://drive.google.com/uc?id=%v&export=download", docID)
-	resp, data, _ := ses.Get(url).End()
-	if resp == nil {
-		return data, errors.New("nil response")
-	}
-	if resp.StatusCode != 200 {
-		return data, errors.New("wrong response code received: " + strconv.Itoa(resp.StatusCode))
-	}
-	return data, nil
+	return r.String(), e
 }
 
 //
@@ -1375,6 +1382,10 @@ func NewSimpleLog(prefix string, logTime bool) func(string2 string) {
 }
 
 func SleepWithContext(ctx context.Context, duration time.Duration) (e error) {
+	if duration == 0 {
+		return nil
+	}
+
 	t := time.NewTimer(duration)
 	select {
 	case <-ctx.Done():
