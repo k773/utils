@@ -12,8 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	//"github.com/SilverCory/golang_discord_rpc"
-	"github.com/syndtr/goleveldb/leveldb"
+
 	"path/filepath"
 	"sort"
 	"strings"
@@ -514,34 +513,6 @@ func BytesToBool(bytes []byte) bool {
 	ret, err := strconv.ParseBool(string(bytes))
 	H(err)
 	return ret
-}
-
-func DbGet_(db *leveldb.DB, key string, defVal []byte) []byte {
-	if DbHas(db, key) {
-		return DbGet(db, key)
-	}
-	return defVal
-}
-
-func DbGet(db *leveldb.DB, key string) []byte {
-	val, err := db.Get([]byte(key), nil)
-	if err != nil {
-		if err.Error() == "leveldb: not found" {
-			return []byte{}
-		}
-		panic(err)
-	}
-	return val
-}
-
-func DbSet(db *leveldb.DB, key string, value interface{}) {
-	_ = db.Delete([]byte(key), nil)
-	_ = db.Put([]byte(key), value.([]byte), nil)
-}
-
-func DbHas(db *leveldb.DB, key string) bool {
-	has, _ := db.Has([]byte(key), nil)
-	return has
 }
 
 func Contains[T comparable](s []T, e T) bool {
