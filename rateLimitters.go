@@ -86,3 +86,32 @@ func (r *RateLimiterV2) Run() {
 	}
 
 }
+
+/*
+	Rate limiter v3: does not require Done() to be called, but may use more cpu time.
+*/
+
+type RateLimiterV3 struct {
+	l sync.Mutex
+
+	lastRequest time.Time
+	b           time.Duration // time between two Wait() releases
+}
+
+func NewRateLimiterV3(betweenTwoReleases time.Duration) *RateLimiterV3 {
+	return &RateLimiterV3{
+		b: betweenTwoReleases,
+	}
+}
+
+func (r *RateLimiterV3) Wait() {
+	r.l.Lock()
+	defer r.l.Unlock()
+
+	var t0 = time.Now()
+	var td = r.b - Clamp(t0.Sub(r.lastRequest), 0, r.b)
+	if !r.lastRequest.IsZero() {
+		time.Sleep(td)
+	}
+	r.lastRequest = t0.Add(td)
+}

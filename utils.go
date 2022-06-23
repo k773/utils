@@ -1253,7 +1253,7 @@ func ProgressCalculator[T Ints | Uints | Floats](total T) func(add T) (total, pr
 	}
 }
 
-func Clamp[T Ints | Uints | Floats](num, min, max T) T {
+func Clamp[T Ints | Uints | Floats | time.Duration](num, min, max T) T {
 	if num < min {
 		return min
 	} else if num > max {
