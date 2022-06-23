@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	"github.com/k773/utils"
 	"github.com/pkg/errors"
 	"time"

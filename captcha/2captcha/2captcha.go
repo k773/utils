@@ -3,7 +3,7 @@ package twocaptcha
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	"github.com/k773/utils"
 	"github.com/pkg/errors"
 	"strconv"

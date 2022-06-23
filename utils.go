@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	//"github.com/SilverCory/golang_discord_rpc"
 	"github.com/syndtr/goleveldb/leveldb"
 	"path/filepath"
