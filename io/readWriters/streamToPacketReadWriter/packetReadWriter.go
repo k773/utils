@@ -1,8 +1,7 @@
-package packetReadWriter
+package streamToPacketReadWriter
 
 import (
 	"bytes"
-	"encoding/binary"
 	"github.com/pkg/errors"
 	"io"
 	"sync"
@@ -30,20 +29,25 @@ func (rw *ReadWriter) ReadPacket(dst *bytes.Buffer) (packet *bytes.Buffer, e err
 	rw.rLock.Lock()
 	defer rw.rLock.Unlock()
 
-	var size uint32
-	if e = binary.Read(rw.RW, binary.LittleEndian, &size); e == nil {
+	// For some reason binary.Read is very slow
+	var sizeB = make([]byte, 4)
+	if _, e = io.ReadFull(rw.RW, sizeB); e == nil {
+		var size = uint32(sizeB[0]) | uint32(sizeB[1])<<8 | uint32(sizeB[2])<<16 | uint32(sizeB[3])<<24
 		if rw.MaxPacketSize != 0 && size > rw.MaxPacketSize {
 			return nil, ErrorPacketSizeExceedsLimit
 		}
 
-		if dst != nil {
-			packet = dst
-		} else {
+		if dst == nil {
 			packet = bytes.NewBuffer(make([]byte, size))
 			packet.Reset()
+		} else {
+			packet = dst
 		}
-
-		_, e = io.CopyN(packet, rw.RW, int64(size))
+		// This is slightly faster than using io.CopyN
+		var buf = make([]byte, size)
+		if _, e = io.ReadFull(rw.RW, buf); e == nil {
+			packet.Write(buf)
+		}
 	}
 	return
 }
@@ -52,9 +56,15 @@ func (rw *ReadWriter) WritePacket(data *bytes.Buffer) (e error) {
 	rw.wLock.Lock()
 	defer rw.wLock.Unlock()
 
-	if e = binary.Write(rw.RW, binary.LittleEndian, uint32(data.Len())); e == nil {
-		//_, e = io.Copy(rw.RW, data)
-		_, e = rw.RW.Write(data.Bytes())
-	}
+	// This is a bit faster than writing with a binary.Write & calling RW.Write multiple times
+	l := data.Len()
+	var c = make([]byte, l+4)
+	copy(c[4:], data.Bytes())
+	c[0] = byte(l)
+	c[1] = byte(l >> 8)
+	c[2] = byte(l >> 16)
+	c[3] = byte(l >> 24)
+
+	_, e = rw.RW.Write(c)
 	return
 }

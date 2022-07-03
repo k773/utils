@@ -11,3 +11,10 @@ func PadLeft(s string, n int, ch byte) string {
 	}
 	return s
 }
+
+func AddToTheLeft(s string, n int, ch byte) string {
+	var mk = make([]byte, n+len(s))
+	MemsetRepeat(mk, n, ch)
+	copy(mk[n:], s)
+	return string(mk)
+}

@@ -1,10 +1,10 @@
-package aesGcmReadWriter
+package cipherAEADReadWriter
 
 import (
 	"bytes"
 	"crypto/cipher"
 	"crypto/rand"
-	"github.com/k773/utils/io/readWriters/packetReadWriter"
+	"github.com/k773/utils/io/readWriters/streamToPacketReadWriter"
 	"github.com/pkg/errors"
 )
 
@@ -13,14 +13,14 @@ import (
 */
 
 type ReadWriter struct {
-	PacketReadWriter *packetReadWriter.ReadWriter
+	PacketReadWriter *streamToPacketReadWriter.ReadWriter
 	BlockCipher      cipher.AEAD
 
 	// optional
 	getNonce func() []byte
 }
 
-func NewReadWriter(packetReadWriter *packetReadWriter.ReadWriter, blockCipher cipher.AEAD, getNonce func() []byte) *ReadWriter {
+func NewReadWriter(packetReadWriter *streamToPacketReadWriter.ReadWriter, blockCipher cipher.AEAD, getNonce func() []byte) *ReadWriter {
 	if getNonce == nil {
 		getNonce = func() []byte {
 			var nonce = make([]byte, 12)
