@@ -1373,3 +1373,15 @@ func ReadLine(a io.Reader) string {
 	text, _ := reader.ReadString('\n')
 	return text
 }
+
+func Assert(a bool) {
+	if !a {
+		panic("assert failed")
+	}
+}
+
+func AssertV[T comparable](v, expect T) {
+	if v != expect {
+		panic(fmt.Sprintf("asset failed: expected: %v, received: %v", expect, v))
+	}
+}
