@@ -12,8 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"github.com/k773/utils/fixedPoint"
-
 	"path/filepath"
 	"sort"
 	"strings"
@@ -218,7 +216,7 @@ func JoinErrors(e1 ...error) (e2 error) {
 	return
 }
 
-func Abs[T Ints | Floats | fixedPoint.IntScaledP6](a T) T {
+func Abs[T Ints | Floats](a T) T {
 	if a >= 0 {
 		return a
 	}

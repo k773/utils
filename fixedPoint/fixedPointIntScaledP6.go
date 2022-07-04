@@ -140,6 +140,13 @@ func (i IntScaledP6) Ceil(n int) IntScaledP6 {
 	return i/intScaledP6Scale*intScaledP6Scale + fractional
 }
 
+func (i IntScaledP6) Abs() IntScaledP6 {
+	if i < 0 {
+		return -i
+	}
+	return i
+}
+
 /*
 	NaN support
 */
