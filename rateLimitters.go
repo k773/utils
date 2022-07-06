@@ -115,3 +115,29 @@ func (r *RateLimiterV3) Wait() {
 	}
 	r.lastRequest = t0.Add(td)
 }
+
+/*
+	Rate limiter v4: it is a copy of RateLimiterV3 but the delay is specified with each call
+*/
+
+type RateLimiterV4 struct {
+	l sync.Mutex
+
+	lastRequest time.Time
+}
+
+func NewRateLimiterV4() *RateLimiterV4 {
+	return new(RateLimiterV4)
+}
+
+func (r *RateLimiterV4) Wait(sinceLastRelease time.Duration) {
+	r.l.Lock()
+	defer r.l.Unlock()
+
+	var t0 = time.Now()
+	var td = sinceLastRelease - Clamp(t0.Sub(r.lastRequest), 0, sinceLastRelease)
+	if !r.lastRequest.IsZero() {
+		time.Sleep(td)
+	}
+	r.lastRequest = t0.Add(td)
+}
