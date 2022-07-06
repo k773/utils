@@ -12,6 +12,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/net/proxy"
+	"net/url"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -1383,4 +1385,18 @@ func AssertV[T comparable](v, expect T) {
 	if v != expect {
 		panic(fmt.Sprintf("asset failed: expected: %v, received: %v", expect, v))
 	}
+}
+
+// ParseAuthorizationUrl parses the url in the following format: scheme://login:password@host
+// Also works on proxies.
+func ParseAuthorizationUrl(src string) (scheme, host string, auth *proxy.Auth, e error) {
+	u, e := url.Parse(src)
+	if e == nil {
+		scheme, host = u.Scheme, u.Host
+
+		auth = new(proxy.Auth)
+		p, _ := u.User.Password()
+		auth.User, auth.Password = u.User.Username(), p
+	}
+	return
 }
