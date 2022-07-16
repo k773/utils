@@ -64,7 +64,7 @@ func (i IntScaledP6) String() string {
 		var wasEmpty = n1 == -1
 		i /= 10
 
-		if b != 0 || n1 != -1 {
+		if b != 0 || n1 != -1 || n >= intScaledP6N {
 			n1++
 		}
 		if n1 != -1 {
