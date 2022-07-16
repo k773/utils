@@ -8,8 +8,14 @@ require (
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/net v0.0.0-20220622184535-263ec571b305
+	golang.org/x/net v0.0.0-20220708220712-1185a9018129
 	golang.org/x/text v0.3.7
 )
 
-require golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+require (
+	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/klauspost/compress v1.15.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.38.0 // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+)

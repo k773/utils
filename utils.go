@@ -12,7 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/valyala/fasthttp"
 	"golang.org/x/net/proxy"
+	"net"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -1389,14 +1391,42 @@ func AssertV[T comparable](v, expect T) {
 
 // ParseAuthorizationUrl parses the url in the following format: scheme://login:password@host
 // Also works on proxies.
+// If no scheme present, an error will be returned.
 func ParseAuthorizationUrl(src string) (scheme, host string, auth *proxy.Auth, e error) {
+	if !strings.Contains(src, "://") {
+		return "", "", nil, errors.New("parse \"" + src + "\": missing protocol scheme")
+	}
+
 	u, e := url.Parse(src)
+
 	if e == nil {
 		scheme, host = u.Scheme, u.Host
 
 		auth = new(proxy.Auth)
 		p, _ := u.User.Password()
 		auth.User, auth.Password = u.User.Username(), p
+	}
+	return
+}
+
+// GetSocks5ProxiedFastHttpClient returns a fasthttp client with installed SOCKS5 dialer. The proxy must be formatted as follows: scheme://login:password@host.
+// Scheme is ignored but must be presented in the proxyStringUrl.
+func GetSocks5ProxiedFastHttpClient(proxyStringUrl string) (s *fasthttp.Client, e error) {
+	_, host, auth, e := ParseAuthorizationUrl(proxyStringUrl)
+	if e == nil {
+		var dialer proxy.Dialer
+		dialer, e = proxy.SOCKS5("tcp", host, auth, &net.Dialer{
+			Timeout:   60 * time.Second,
+			KeepAlive: 30 * time.Second,
+		})
+		if e == nil {
+			s = &fasthttp.Client{
+				Dial: func(addr string) (net.Conn, error) {
+					return dialer.Dial("tcp", addr)
+				},
+				MaxConnsPerHost: 10,
+			}
+		}
 	}
 	return
 }
