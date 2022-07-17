@@ -17,6 +17,11 @@ const intScaledP6N = 6
 const intScaledP6Scale = 10 * 10 * 10 * 10 * 10 * 10
 const NaN = -(1<<63 - 1) // bits set are identical to uint64(1<<64-1)
 
+// These are here to remove the unnecessary calculations
+
+// IntScaledP6ZeroPointFive = 0.5
+const IntScaledP6ZeroPointFive = 500000
+
 func ParseIntScaledP6(src string) IntScaledP6 {
 	a, b, c, n := ParseFixedPointRaw(src, intScaledP6N)
 	return NewIntScaledP6(a, b, c, n)
@@ -107,6 +112,11 @@ func (i IntScaledP6) Floor(n int) IntScaledP6 {
 		n = 0
 	}
 
+	return i.FloorUnsafe(n)
+}
+
+// FloorUnsafe works correctly only on numbers [0, +inf)
+func (i IntScaledP6) FloorUnsafe(n int) IntScaledP6 {
 	var pow = IntScaledP6(utils.Pow10(intScaledP6N - n))
 	var fractional = (i % intScaledP6Scale) / pow * pow
 
@@ -123,6 +133,11 @@ func (i IntScaledP6) Ceil(n int) IntScaledP6 {
 		n = 0
 	}
 
+	return i.CeilUnsafe(n)
+}
+
+// CeilUnsafe works correctly only on numbers [0, +inf)
+func (i IntScaledP6) CeilUnsafe(n int) IntScaledP6 {
 	var pow = IntScaledP6(utils.Pow10(intScaledP6N - n))
 	var fractional = (i % intScaledP6Scale) / pow * pow
 
