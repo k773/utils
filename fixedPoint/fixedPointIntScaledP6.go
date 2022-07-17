@@ -91,15 +91,7 @@ func (i IntScaledP6) Multiply(i2 IntScaledP6) IntScaledP6 {
 	var a1, b1 = i / intScaledP6Scale, i % intScaledP6Scale
 	var a2, b2 = i2 / intScaledP6Scale, i2 % intScaledP6Scale
 
-	var res IntScaledP6
-	if a1 != 0 && a2 != 0 {
-		res += (a1*a2)*intScaledP6Scale + b1*a2
-	}
-	if b1 != 0 && b2 != 0 {
-		res += (a1 * b2) + (b1*b2)/intScaledP6Scale
-	}
-
-	return res
+	return (a1 * b2) + (a2 * b1) + (a1*a2)*intScaledP6Scale + (b1*b2)/intScaledP6Scale
 }
 
 func (i IntScaledP6) Divide(i2 IntScaledP6) IntScaledP6 {
