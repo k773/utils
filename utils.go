@@ -1441,3 +1441,25 @@ func GetSocks5ProxiedFastHttpClient(proxyStringUrl string) (s *fasthttp.Client, 
 	}
 	return
 }
+
+func ReduceMap[K comparable, V any, R any](m map[K]V, f func(K, V, R) (R, bool), value R) R {
+	var cont bool
+	for k, v := range m {
+		value, cont = f(k, v, value)
+		if !cont {
+			break
+		}
+	}
+	return value
+}
+
+func ReduceSlice[V any, R any](s []V, f func(int, V, R) (R, bool), value R) R {
+	var cont bool
+	for k, v := range s {
+		value, cont = f(k, v, value)
+		if !cont {
+			break
+		}
+	}
+	return value
+}
