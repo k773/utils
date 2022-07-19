@@ -1054,7 +1054,7 @@ func Avg[T Ints | Uints | Floats | time.Duration](val ...T) float64 {
 	return float64(a) / float64(len(val))
 }
 
-func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
+func CopyMapValuesToSlice[K comparable, V any](m map[K]V) []V {
 	var ret = make([]V, len(m))
 	i := 0
 	for _, v := range m {
@@ -1064,7 +1064,7 @@ func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
 	return ret
 }
 
-func CopyMapKeysToSlice[K, V comparable](m map[K]V) []K {
+func CopyMapKeysToSlice[K comparable, V any](m map[K]V) []K {
 	var ret = make([]K, len(m))
 	i := 0
 	for k := range m {
