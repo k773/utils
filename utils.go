@@ -1463,3 +1463,9 @@ func ReduceSlice[V any, R any](s []V, f func(int, V, R) (R, bool), value R) R {
 	}
 	return value
 }
+
+func MeasureExecutionTime(f func()) time.Duration {
+	t1 := time.Now()
+	f()
+	return time.Now().Sub(t1)
+}
