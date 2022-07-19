@@ -1059,6 +1059,7 @@ func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
 	i := 0
 	for _, v := range m {
 		ret[i] = v
+		i++
 	}
 	return ret
 }
