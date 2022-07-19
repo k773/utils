@@ -1064,6 +1064,16 @@ func CopyMapValuesToSlice[K, V comparable](m map[K]V) []V {
 	return ret
 }
 
+func CopyMapKeysToSlice[K, V comparable](m map[K]V) []K {
+	var ret = make([]K, len(m))
+	i := 0
+	for k := range m {
+		ret[i] = k
+		i++
+	}
+	return ret
+}
+
 func MemsetRepeat[T comparable](a []T, n int, v T) {
 	if len(a) == 0 {
 		return
