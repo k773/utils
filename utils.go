@@ -936,6 +936,15 @@ func ArrayAny[T comparable](a []T, f func(T) bool) bool {
 	return false
 }
 
+func MapAll[K comparable, V any](m map[K]V, f func(k K, v V) bool) bool {
+	for k, v := range m {
+		if !f(k, v) {
+			return false
+		}
+	}
+	return true
+}
+
 // SlicesSubtract returns array of elements that exist in the array 1 but do not exist in the array 2
 func SlicesSubtract[T comparable](arr1, arr2 []T) []T {
 	var a []T
