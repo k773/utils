@@ -413,12 +413,21 @@ func (s *SafeUniqueArray[T]) GobDecode(data []byte) error {
 	return gob.NewDecoder(bytes.NewReader(data)).Decode(&s.m)
 }
 
-type KeyValue[K, V any] struct {
+type SafeKeyValue[K, V any] struct {
 	unexportedMutex
 	K K
 	V V
 }
 
-func NewSafeKeyPair[K, V any]() *KeyValue[K, V] {
+func NewSafeKeyValue[K, V any]() *SafeKeyValue[K, V] {
+	return &SafeKeyValue[K, V]{}
+}
+
+type KeyValue[K, V any] struct {
+	K K
+	V V
+}
+
+func NewKeyValue[K, V any]() *KeyValue[K, V] {
 	return &KeyValue[K, V]{}
 }
