@@ -1478,3 +1478,7 @@ func MeasureExecutionTime(f func()) time.Duration {
 	f()
 	return time.Now().Sub(t1)
 }
+
+func Ref[T any](v T) *T {
+	return &v
+}
