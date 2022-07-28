@@ -1482,3 +1482,15 @@ func MeasureExecutionTime(f func()) time.Duration {
 func Ref[T any](v T) *T {
 	return &v
 }
+
+func UniqueSlice[T any](slice []T, hash func(T) string) (ret []T) {
+	var m = map[string]struct{}{}
+	for _, v := range slice {
+		itemHash := hash(v)
+		if _, h := m[itemHash]; !h {
+			m[itemHash] = struct{}{}
+			ret = append(ret, v)
+		}
+	}
+	return
+}
