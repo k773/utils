@@ -219,10 +219,10 @@ func (i IntScaledP6) CeilNaN(n int) IntScaledP6 {
 */
 
 func (i *IntScaledP6) UnmarshalJSON(bytes []byte) error {
-	*i = ParseIntScaledP6NaN(string(bytes))
+	*i = ParseIntScaledP6(string(bytes))
 	return nil
 }
 
 func (i IntScaledP6) MarshalJSON() ([]byte, error) {
-	return []byte(i.StringNaN()), nil
+	return []byte(i.String()), nil
 }
