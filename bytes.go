@@ -1,5 +1,7 @@
 package utils
 
+import "encoding/binary"
+
 // TODO: make it work
 //func ShiftLeft(data []byte, bits int) {
 //	n := len(data)
@@ -16,3 +18,14 @@ package utils
 //		data[n-1] <<= bits
 //	}
 //}
+
+func Uint64ToLE(a uint64) []byte {
+	var buf = make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, a)
+	return buf
+}
+func Uint64ToBE(a uint64) []byte {
+	var buf = make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, a)
+	return buf
+}
