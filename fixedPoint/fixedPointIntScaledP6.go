@@ -27,9 +27,24 @@ func ParseIntScaledP6(src string) IntScaledP6 {
 	return NewIntScaledP6(a, b, c, n)
 }
 
-// NewIntScaledP6 creates a new IntScaledP6 object; fractionalPow - the number of leading zeroes in the fractional part
-func NewIntScaledP6(decimal, fractional, fractionalPow uint, negative bool) IntScaledP6 {
-	var a = IntScaledP6(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-uint(utils.Log10(int(fractional)))-fractionalPow)))))
+// NewIntScaledP6 creates a new IntScaledP6 object; leadingZeroes - the number of leading zeroes in the fractional part
+func NewIntScaledP6(decimal, fractional, leadingZeroes uint, negative bool) IntScaledP6 {
+	var a = IntScaledP6(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-uint(utils.Log10(int(fractional)))-leadingZeroes)))))
+	if !negative {
+		return a
+	}
+	return -a
+}
+
+// NewIntScaledP6MinLeading examples:
+// NewIntScaledP6MinLeading(201/100, 201%100, 2, false).String() = "2.01"
+func NewIntScaledP6MinLeading(decimal, fractional, minLeadingZeroes uint, negative bool) IntScaledP6 {
+	var fractionalPow = uint(utils.Log10(int(fractional)))
+	if fractionalPow < minLeadingZeroes {
+		fractionalPow = minLeadingZeroes
+	}
+
+	var a = IntScaledP6(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-fractionalPow)))))
 	if !negative {
 		return a
 	}
