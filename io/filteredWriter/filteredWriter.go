@@ -18,8 +18,8 @@ type FilteredWriter struct {
 	OverflowProtectionMaxSize int
 }
 
-func NewFilteredWriter(dst io.Writer, filter func(data []byte) bool, overflowProtectionMaxSize int) *FilteredWriter {
-	return &FilteredWriter{Buf: bytes.NewBuffer(nil), Dst: dst, Filter: filter, OverflowProtectionMaxSize: overflowProtectionMaxSize}
+func NewFilteredWriter(dst io.Writer, filter func(data []byte) bool, filterDelimiter byte, overflowProtectionMaxSize int) *FilteredWriter {
+	return &FilteredWriter{Buf: bytes.NewBuffer(nil), Dst: dst, Filter: filter, FilterDelimiter: filterDelimiter, OverflowProtectionMaxSize: overflowProtectionMaxSize}
 }
 
 func (f *FilteredWriter) Write(p []byte) (n int, err error) {
