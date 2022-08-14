@@ -79,3 +79,18 @@ func RunForeverSync(ctx context.Context, f func(), every time.Duration, simultan
 	}
 	t.Stop()
 }
+
+// RunForeverSyncUntil : f func should return false to stop the execution
+func RunForeverSyncUntil(ctx context.Context, f func() bool, every time.Duration) {
+	if ctx.Err() != nil || !f() {
+		return
+	}
+
+	var t = time.NewTicker(every)
+	for range t.C {
+		if ctx.Err() != nil || !f() {
+			break
+		}
+	}
+	t.Stop()
+}
