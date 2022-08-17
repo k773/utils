@@ -423,6 +423,10 @@ func NewSafeKeyValue[K, V any]() *SafeKeyValue[K, V] {
 	return &SafeKeyValue[K, V]{}
 }
 
+func NewSafeKeyValueFrom[K, V any](k K, v V) *SafeKeyValue[K, V] {
+	return &SafeKeyValue[K, V]{K: k, V: v}
+}
+
 type KeyValue[K, V any] struct {
 	K K
 	V V
@@ -430,4 +434,8 @@ type KeyValue[K, V any] struct {
 
 func NewKeyValue[K, V any]() *KeyValue[K, V] {
 	return &KeyValue[K, V]{}
+}
+
+func NewKeyValueFrom[K, V any](k K, v V) *KeyValue[K, V] {
+	return &KeyValue[K, V]{K: k, V: v}
 }
