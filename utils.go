@@ -432,13 +432,13 @@ func ReadFileByLines(path string) (error, []string) {
 	return nil, ret
 }
 
-//DEPRECATED
+// DEPRECATED
 func FindGroup_(text string, reg string) []string {
 	regex, _ := regexp.Compile(reg)
 	return regex.FindStringSubmatch(text)
 }
 
-//DEPRECATED
+// DEPRECATED
 func FindGroups_(text string, reg string) []string {
 	regex, _ := regexp.Compile(reg)
 	temp := regex.FindAllStringSubmatch(text, -1)
@@ -449,7 +449,7 @@ func FindGroups_(text string, reg string) []string {
 	return temp4
 }
 
-//DEPRECATED
+// DEPRECATED
 func FindAllGroups_(text string, reg string) [][]string {
 	return FindListOfGroups(text, reg)
 }
@@ -1493,4 +1493,11 @@ func UniqueSlice[T any](slice []T, hash func(T) string) (ret []T) {
 		}
 	}
 	return
+}
+
+func PrependSlice[T any](slice []T, val T) (res []T) {
+	slice = append(slice, val)
+	copy(slice[1:], slice)
+	slice[0] = val
+	return slice
 }

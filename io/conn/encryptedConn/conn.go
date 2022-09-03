@@ -1,7 +1,6 @@
 package encryptedConn
 
 import (
-	"crypto/cipher"
 	"encoding/binary"
 	"net"
 )
@@ -9,21 +8,21 @@ import (
 type Conn struct {
 	net.Conn
 
-	Encrypt cipher.Stream
-	Decrypt cipher.Stream
+	Encrypt func(dst, src []byte)
+	Decrypt func(dst, src []byte)
 }
 
 func (c *Conn) Read(b []byte) (n int, err error) {
 	n, err = c.Conn.Read(b)
 	if c.Decrypt != nil {
-		c.Decrypt.XORKeyStream(b[:n], b[:n])
+		c.Decrypt(b[:n], b[:n])
 	}
 	return
 }
 
 func (c *Conn) Write(b []byte) (n int, err error) {
 	if c.Encrypt != nil {
-		c.Encrypt.XORKeyStream(b, b)
+		c.Encrypt(b, b)
 	}
 	return c.Conn.Write(b)
 }
