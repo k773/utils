@@ -13,11 +13,11 @@ import (
 type AntiCaptcha struct {
 	logger *utils.Logger
 	s      *resty.Client
-	key    string
+	Key    string
 }
 
 func New(s *resty.Client, key string, logger ...*utils.Logger) *AntiCaptcha {
-	var ac = &AntiCaptcha{s: s, key: key}
+	var ac = &AntiCaptcha{s: s, Key: key}
 	if len(logger) != 0 {
 		ac.logger = logger[0]
 	}
@@ -132,7 +132,7 @@ func (a *AntiCaptcha) waitForResponse(ctx context.Context, acType, sitekey, site
 					var resp *resty.Response
 					resp, e = a.s.R().SetContext(ctx).
 						SetBody(antiCaptchaGetTaskResultRequest{
-							ClientKey: a.key,
+							ClientKey: a.Key,
 							TaskID:    newTaskResponse.TaskID,
 						}).
 						Post(antiCaptchaGetTaskResultUrl)
@@ -169,7 +169,7 @@ func (a *AntiCaptcha) SolveRecaptchaV2(ctx context.Context, websiteKey, websiteU
 
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.key,
+			ClientKey: a.Key,
 			Task: antiCaptchaTaskRequest{
 				Type:          taskType,
 				WebsiteURL:    websiteUrl,
@@ -207,7 +207,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey
 
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.key,
+			ClientKey: a.Key,
 			Task: antiCaptchaTaskRequest{
 				Type:              taskType,
 				WebsiteURL:        websiteUrl,
@@ -246,7 +246,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, webs
 
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.key,
+			ClientKey: a.Key,
 			Task: antiCaptchaTaskRequest{
 				Type:              taskType,
 				WebsiteURL:        websiteUrl,
@@ -274,7 +274,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, webs
 func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCaptchaResponse CaptchaResult, e error) {
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.key,
+			ClientKey: a.Key,
 			Task: antiCaptchaTaskRequest{
 				Type:      antiCaptchaTypeImageToText,
 				Body:      base64.StdEncoding.EncodeToString(img),
@@ -318,7 +318,7 @@ func (cr *CaptchaResult) Report(ctx context.Context, good bool) error {
 	}
 	resp, e := cr.cap.s.R().SetContext(ctx).
 		SetBody(antiCaptchaGetTaskResultRequest{
-			ClientKey: cr.cap.key,
+			ClientKey: cr.cap.Key,
 			TaskID:    cr.id,
 		}).Post(url)
 	if e == nil {
