@@ -14,6 +14,9 @@ type AntiCaptcha struct {
 	logger *utils.Logger
 	s      *resty.Client
 	Key    string
+
+	// hooks, may be nil; if nil, must return true to continue, false - to prevent the execution
+	OnReport func(cr *CaptchaResult, good bool) bool
 }
 
 func New(s *resty.Client, key string, logger ...*utils.Logger) *AntiCaptcha {
@@ -297,6 +300,11 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 func (cr *CaptchaResult) Report(ctx context.Context, good bool) error {
 	if cr.cap == nil {
 		return errors.New("nil captcha instance")
+	}
+	if cr.cap.OnReport != nil {
+		if !cr.cap.OnReport(cr, good) {
+			return nil
+		}
 	}
 
 	var url string
