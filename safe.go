@@ -21,8 +21,8 @@ func (u *unexportedMutex) RUnlock() {
 func (u *unexportedMutex) Lock() {
 	u.s.Lock()
 }
-func (u *unexportedMutex) TryLock() {
-	u.s.TryLock()
+func (u *unexportedMutex) TryLock() bool {
+	return u.s.TryLock()
 }
 func (u *unexportedMutex) Unlock() {
 	u.s.Unlock()

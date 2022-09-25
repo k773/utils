@@ -1,7 +1,6 @@
 package captcha
 
-import "github.com/k773/utils"
+import "github.com/k773/utils/captcha/types"
 
-type Instance interface {
-	SolveRecaptchaEnterprise(siteKey, dataS string, proxy *utils.ProxyData)
-}
+type SolverInstance = types.CaptchaSolverInstance
+type Result = types.CaptchaResult

@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
 	"github.com/k773/utils"
+	"github.com/k773/utils/captcha/types"
 	"github.com/pkg/errors"
+	"strconv"
 	"time"
 )
 
@@ -103,7 +105,7 @@ type CaptchaResult struct {
 		Text               string `json:"text"`
 		URL                string `json:"url"`
 	} `json:"solution"`
-	Cost       string `json:"cost"`
+	CostStr    string `json:"cost"`
 	IP         string `json:"ip"`
 	CreateTime int    `json:"createTime"`
 	EndTime    int    `json:"endTime"`
@@ -117,7 +119,9 @@ type antiCaptchaReportResult struct {
 	Status           string `json:"status"`
 }
 
-func (a *AntiCaptcha) waitForResponse(ctx context.Context, acType, sitekey, siteUrl string, newTaskResponseB []byte) (antiCaptchaResponse CaptchaResult, e error) {
+func (a *AntiCaptcha) waitForResponse(ctx context.Context, acType, sitekey, siteUrl string, newTaskResponseB []byte) (res types.CaptchaResult, e error) {
+	var antiCaptchaResponse = new(CaptchaResult)
+
 	antiCaptchaResponse.cap = a
 	antiCaptchaResponse.TaskType = acType
 	antiCaptchaResponse.Status = "processing"
@@ -160,10 +164,10 @@ func (a *AntiCaptcha) waitForResponse(ctx context.Context, acType, sitekey, site
 			a.logger.Log(acType, "error", "sitekey:", sitekey, ", site url:", siteUrl, "; error:", e)
 		}
 	}
-	return
+	return antiCaptchaResponse, e
 }
 
-func (a *AntiCaptcha) SolveRecaptchaV2(ctx context.Context, websiteKey, websiteUrl string, proxyData *utils.ProxyData) (antiCaptchaResponse CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveRecaptchaV2(ctx context.Context, websiteKey, websiteUrl string, proxyData *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
 	var taskType = antiCaptchaTypeRecaptchaV2Proxy
 	if proxyData == nil {
 		taskType = antiCaptchaTypeRecaptchaV2Proxyless
@@ -191,11 +195,13 @@ func (a *AntiCaptcha) SolveRecaptchaV2(ctx context.Context, websiteKey, websiteU
 
 	if e == nil {
 		antiCaptchaResponse, e = a.waitForResponse(ctx, taskType, websiteKey, websiteUrl, resp.Body())
+	} else {
+		antiCaptchaResponse = new(CaptchaResult)
 	}
 	return antiCaptchaResponse, errors.Wrap(e, "SolveRecaptchaV2")
 }
 
-func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey, websiteUrl, s string, proxyData *utils.ProxyData) (antiCaptchaResponse CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey, websiteUrl, s string, proxyData *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
 	var taskType = antiCaptchaTypeRecaptchaV2EnterpriseProxy
 	if proxyData == nil {
 		taskType = antiCaptchaTypeRecaptchaV2EnterpriseProxyless
@@ -230,11 +236,13 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey
 
 	if e == nil {
 		antiCaptchaResponse, e = a.waitForResponse(ctx, taskType, websiteKey+"/"+s, websiteUrl, resp.Body())
+	} else {
+		antiCaptchaResponse = new(CaptchaResult)
 	}
 	return antiCaptchaResponse, errors.Wrap(e, "SolveRecaptchaEnterpriseV2")
 }
 
-func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, websiteKey, websiteUrl, s, domain string, proxyData *utils.ProxyData) (antiCaptchaResponse CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, websiteKey, websiteUrl, s, domain string, proxyData *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
 	var taskType = antiCaptchaTypeRecaptchaV2EnterpriseProxy
 	if proxyData == nil {
 		taskType = antiCaptchaTypeRecaptchaV2EnterpriseProxyless
@@ -270,11 +278,13 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, webs
 
 	if e == nil {
 		antiCaptchaResponse, e = a.waitForResponse(ctx, taskType, websiteKey+"/"+s, websiteUrl, resp.Body())
+	} else {
+		antiCaptchaResponse = new(CaptchaResult)
 	}
 	return antiCaptchaResponse, errors.Wrap(e, "SolveRecaptchaEnterpriseV2")
 }
 
-func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCaptchaResponse CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCaptchaResponse types.CaptchaResult, e error) {
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
 			ClientKey: a.Key,
@@ -293,6 +303,8 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 
 	if e == nil {
 		antiCaptchaResponse, e = a.waitForResponse(ctx, antiCaptchaTypeImageToText, "none(image)", "none(image)", resp.Body())
+	} else {
+		antiCaptchaResponse = new(CaptchaResult)
 	}
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
 }
@@ -360,4 +372,13 @@ func (cr *CaptchaResult) ReportBad(ctx context.Context) {
 	_ = cr.Report(ctx, false)
 }
 
-//F
+func (cr *CaptchaResult) IsZeroBalance() bool {
+	return cr.ErrorCode == "ERROR_ZERO_BALANCE"
+}
+
+func (cr *CaptchaResult) Cost() float64 {
+	if a, e := strconv.ParseFloat(cr.CostStr, 64); e == nil {
+		return a
+	}
+	return 0
+}
