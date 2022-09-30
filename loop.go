@@ -2,6 +2,7 @@ package utils
 
 import (
 	"golang.org/x/net/context"
+	"sync"
 	"time"
 )
 
@@ -93,4 +94,20 @@ func RunForeverSyncUntil(ctx context.Context, f func() bool, every time.Duration
 		}
 	}
 	t.Stop()
+}
+
+// DelayedExecution will trigger wg only at the end of the execution; increasing the value before calling this function is up to the caller
+func DelayedExecution(ctx context.Context, wg *sync.WaitGroup, executeOnParentCancelled bool, delay time.Duration, f func()) {
+	var wait = time.NewTimer(delay)
+	defer wait.Stop()
+	defer wg.Done()
+
+	select {
+	case <-wait.C:
+		f()
+	case <-ctx.Done():
+		if executeOnParentCancelled {
+			f()
+		}
+	}
 }
