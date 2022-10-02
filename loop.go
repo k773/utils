@@ -100,7 +100,9 @@ func RunForeverSyncUntil(ctx context.Context, f func() bool, every time.Duration
 func DelayedExecution(ctx context.Context, wg *sync.WaitGroup, executeOnParentCancelled bool, delay time.Duration, f func()) {
 	var wait = time.NewTimer(delay)
 	defer wait.Stop()
-	defer wg.Done()
+	if wg != nil {
+		defer wg.Done()
+	}
 
 	select {
 	case <-wait.C:
