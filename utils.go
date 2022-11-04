@@ -1503,7 +1503,7 @@ func PrependSlice[T any](slice []T, val T) (res []T) {
 	return slice
 }
 
-func ReplaceAllSlashNSlashR[T []byte | string](in T) T {
+func ReplaceAllSlashNSlashR[T []byte | string](in T) T { //
 	return T(strings.ReplaceAll(strings.ReplaceAll(string(in), "\n", ""), "\r", ""))
 }
 
