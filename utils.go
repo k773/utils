@@ -14,6 +14,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/net/proxy"
+	"log"
 	"net"
 	"net/url"
 	"path/filepath"
@@ -1504,4 +1505,8 @@ func PrependSlice[T any](slice []T, val T) (res []T) {
 
 func ReplaceAllSlashNSlashR[T []byte | string](in T) T {
 	return T(strings.ReplaceAll(strings.ReplaceAll(string(in), "\n", ""), "\r", ""))
+}
+
+func NewLoggerDiscard() *log.Logger {
+	return log.New(io.Discard, "", 0)
 }
