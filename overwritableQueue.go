@@ -19,7 +19,7 @@ func NewOverWritableQueue[T any](limit int, preallocate bool) *OverWritableQueue
 	return queue
 }
 
-func (o *OverWritableQueue[T]) Add(value T) bool {
+func (o *OverWritableQueue[T]) Push(value T) bool {
 	o.guard.Lock()
 	defer o.guard.Unlock()
 
@@ -68,6 +68,16 @@ func (o *OverWritableQueue[T]) PullAndClear(deallocate bool) (val T, success boo
 
 func (o *OverWritableQueue[T]) Clear(deallocate bool) {
 	o.clear(false, deallocate)
+}
+
+func (o *OverWritableQueue[T]) Len() int {
+	o.guard.RLock()
+	defer o.guard.Unlock()
+	return len(o.queue)
+}
+
+func (o *OverWritableQueue[T]) Cap() int {
+	return o.limit
 }
 
 func (o *OverWritableQueue[T]) clear(externalLock bool, deallocate bool) {
