@@ -1094,6 +1094,7 @@ func MemsetRepeat[T comparable](a []T, n int, v T) {
 	}
 }
 
+// Copy is deprecated - use slices.Clone instead
 func Copy[T comparable](a []T) []T {
 	var c = make([]T, len(a))
 	copy(c, a)
