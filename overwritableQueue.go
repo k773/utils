@@ -77,13 +77,28 @@ func (o *OverWritableQueue[T]) Len() int {
 }
 
 func (o *OverWritableQueue[T]) Cap() int {
+	o.guard.RLock()
+	defer o.guard.Unlock()
 	return o.limit
+}
+
+// Close clears internal data and prevents any writes
+func (o *OverWritableQueue[T]) Close() {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	o.limit = 0
+	o.queue = nil
 }
 
 func (o *OverWritableQueue[T]) clear(externalLock bool, deallocate bool) {
 	if !externalLock {
 		o.guard.Lock()
 		defer o.guard.Unlock()
+	}
+
+	if o.limit == 0 {
+		return
 	}
 
 	if deallocate {
