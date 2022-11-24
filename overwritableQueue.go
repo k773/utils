@@ -14,7 +14,7 @@ func NewOverWritableQueue[T any](limit int, preallocate bool) *OverWritableQueue
 		limit: limit,
 	}
 	if preallocate {
-		queue.queue = make([]T, limit, 0)
+		queue.queue = make([]T, 0, limit)
 	}
 	return queue
 }
@@ -72,13 +72,13 @@ func (o *OverWritableQueue[T]) Clear(deallocate bool) {
 
 func (o *OverWritableQueue[T]) Len() int {
 	o.guard.RLock()
-	defer o.guard.Unlock()
+	defer o.guard.RUnlock()
 	return len(o.queue)
 }
 
 func (o *OverWritableQueue[T]) Cap() int {
 	o.guard.RLock()
-	defer o.guard.Unlock()
+	defer o.guard.RUnlock()
 	return o.limit
 }
 
