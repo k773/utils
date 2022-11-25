@@ -66,6 +66,17 @@ func (o *OverWritableQueue[T]) PullAndClear(deallocate bool) (val T, success boo
 	return
 }
 
+// Shift shifts the queue by 1 element: [1, 2, 3] -> [2, 3]
+func (o *OverWritableQueue[T]) Shift() {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	if len(o.queue) != 0 {
+		o.queue = o.queue[:len(o.queue)-1]
+	}
+	return
+}
+
 func (o *OverWritableQueue[T]) Clear(deallocate bool) {
 	o.clear(false, deallocate)
 }
