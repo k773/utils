@@ -34,6 +34,7 @@ func (o *OverWritableQueue[T]) Push(value T) bool {
 	return true
 }
 
+// Get returns the last item in the queue: [1, 2, 3] -> 3
 func (o *OverWritableQueue[T]) Get() (val T, success bool) {
 	o.guard.RLock()
 	defer o.guard.RUnlock()
@@ -44,6 +45,18 @@ func (o *OverWritableQueue[T]) Get() (val T, success bool) {
 	return
 }
 
+// GetLeft returns the first item in the queue: [1, 2, 3] -> 1
+func (o *OverWritableQueue[T]) GetLeft() (val T, success bool) {
+	o.guard.RLock()
+	defer o.guard.RUnlock()
+
+	if len(o.queue) != 0 {
+		val, success = o.queue[0], true
+	}
+	return
+}
+
+// Pull gets the last item in the queue and shifts it by 1 item: [1, 2, 3] -> item=3, queue=[1, 2]
 func (o *OverWritableQueue[T]) Pull() (val T, success bool) {
 	o.guard.Lock()
 	defer o.guard.Unlock()
@@ -66,8 +79,8 @@ func (o *OverWritableQueue[T]) PullAndClear(deallocate bool) (val T, success boo
 	return
 }
 
-// Shift shifts the queue by 1 element: [1, 2, 3] -> [2, 3]
-func (o *OverWritableQueue[T]) Shift() {
+// ShiftLeft shifts the queue to the left by 1 element: [1, 2, 3] -> [2, 3]
+func (o *OverWritableQueue[T]) ShiftLeft() {
 	o.guard.Lock()
 	defer o.guard.Unlock()
 
