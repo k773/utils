@@ -51,6 +51,20 @@ func (o *OverWritableQueue[T]) PushIfLenLessThanCap(value T) bool {
 	}
 }
 
+func (o *OverWritableQueue[T]) Filter(f func(v T) (keep bool)) {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	var i = 0
+	for _, v := range o.queue {
+		if f(v) {
+			o.queue[i] = v
+			i++
+		}
+	}
+	o.queue = o.queue[:i]
+}
+
 // Get returns the last item in the queue: [1, 2, 3] -> 3
 func (o *OverWritableQueue[T]) Get() (val T, success bool) {
 	o.guard.RLock()
@@ -97,14 +111,15 @@ func (o *OverWritableQueue[T]) PullAndClear(deallocate bool) (val T, success boo
 }
 
 // ShiftLeft shifts the queue to the left by 1 element: [1, 2, 3] -> [2, 3]
-func (o *OverWritableQueue[T]) ShiftLeft() {
+func (o *OverWritableQueue[T]) ShiftLeft() bool {
 	o.guard.Lock()
 	defer o.guard.Unlock()
 
 	if len(o.queue) != 0 {
-		o.queue = o.queue[:len(o.queue)-1]
+		o.queue = o.queue[1:]
+		return true
 	}
-	return
+	return false
 }
 
 func (o *OverWritableQueue[T]) Clear(deallocate bool) {
