@@ -34,6 +34,23 @@ func (o *OverWritableQueue[T]) Push(value T) bool {
 	return true
 }
 
+// PushIfLenLessThanCap is an atomic version of the expression: if o.Len() < o.Cap() {o.Push(value)}
+func (o *OverWritableQueue[T]) PushIfLenLessThanCap(value T) bool {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	if o.limit == 0 {
+		return false
+	}
+
+	if len(o.queue) < o.limit {
+		o.queue = append(o.queue, value)
+		return true
+	} else {
+		return false
+	}
+}
+
 // Get returns the last item in the queue: [1, 2, 3] -> 3
 func (o *OverWritableQueue[T]) Get() (val T, success bool) {
 	o.guard.RLock()
