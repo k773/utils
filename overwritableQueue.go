@@ -39,30 +39,16 @@ func (o *OverWritableQueue[T]) PushIfLenLessThanCap(value T) bool {
 	o.guard.Lock()
 	defer o.guard.Unlock()
 
-	if o.limit == 0 {
-		return false
-	}
-
-	if len(o.queue) < o.limit {
-		o.queue = append(o.queue, value)
-		return true
-	} else {
-		return false
-	}
+	return o.pushIfLenLessThanCap(value)
 }
 
-func (o *OverWritableQueue[T]) Filter(f func(v T) (keep bool)) {
+// FilterAndPushIfLenLessThanCap is an atomic version of the expression: if o.Filter(f); o.PushIfLenLessThanCap(value)
+func (o *OverWritableQueue[T]) FilterAndPushIfLenLessThanCap(f func(v T) (keep bool), value T) {
 	o.guard.Lock()
 	defer o.guard.Unlock()
 
-	var i = 0
-	for _, v := range o.queue {
-		if f(v) {
-			o.queue[i] = v
-			i++
-		}
-	}
-	o.queue = o.queue[:i]
+	o.filter(f)
+	o.pushIfLenLessThanCap(value)
 }
 
 // Get returns the last item in the queue: [1, 2, 3] -> 3
@@ -105,7 +91,7 @@ func (o *OverWritableQueue[T]) PullAndClear(deallocate bool) (val T, success boo
 
 	if len(o.queue) != 0 {
 		val, success = o.queue[len(o.queue)-1], true
-		o.clear(true, deallocate)
+		o.clear(deallocate)
 	}
 	return
 }
@@ -123,7 +109,17 @@ func (o *OverWritableQueue[T]) ShiftLeft() bool {
 }
 
 func (o *OverWritableQueue[T]) Clear(deallocate bool) {
-	o.clear(false, deallocate)
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	o.clear(deallocate)
+}
+
+func (o *OverWritableQueue[T]) Filter(f func(v T) (keep bool)) {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	o.filter(f)
 }
 
 func (o *OverWritableQueue[T]) Len() int {
@@ -147,12 +143,7 @@ func (o *OverWritableQueue[T]) Close() {
 	o.queue = nil
 }
 
-func (o *OverWritableQueue[T]) clear(externalLock bool, deallocate bool) {
-	if !externalLock {
-		o.guard.Lock()
-		defer o.guard.Unlock()
-	}
-
+func (o *OverWritableQueue[T]) clear(deallocate bool) {
 	if o.limit == 0 {
 		return
 	}
@@ -162,4 +153,32 @@ func (o *OverWritableQueue[T]) clear(externalLock bool, deallocate bool) {
 	} else {
 		o.queue = o.queue[:0]
 	}
+}
+
+/*
+	Unguarded ops
+*/
+
+func (o *OverWritableQueue[T]) pushIfLenLessThanCap(value T) bool {
+	if o.limit == 0 {
+		return false
+	}
+
+	if len(o.queue) < o.limit {
+		o.queue = append(o.queue, value)
+		return true
+	} else {
+		return false
+	}
+}
+
+func (o *OverWritableQueue[T]) filter(f func(v T) (keep bool)) {
+	var i = 0
+	for _, v := range o.queue {
+		if f(v) {
+			o.queue[i] = v
+			i++
+		}
+	}
+	o.queue = o.queue[:i]
 }
