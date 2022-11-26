@@ -2,14 +2,14 @@ package utils
 
 import "sync"
 
-type OverWritableQueue[T any] struct {
+type OverWritableQueue[T comparable] struct {
 	guard sync.RWMutex
 
 	limit int
 	queue []T
 }
 
-func NewOverWritableQueue[T any](limit int, preallocate bool) *OverWritableQueue[T] {
+func NewOverWritableQueue[T comparable](limit int, preallocate bool) *OverWritableQueue[T] {
 	var queue = &OverWritableQueue[T]{
 		limit: limit,
 	}
@@ -104,6 +104,19 @@ func (o *OverWritableQueue[T]) ShiftLeft() bool {
 	if len(o.queue) != 0 {
 		o.queue = o.queue[1:]
 		return true
+	}
+	return false
+}
+
+func (o *OverWritableQueue[T]) ShiftLeftIfLeftEquals(v T) bool {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	if len(o.queue) != 0 {
+		if o.queue[0] == v {
+			o.queue = o.queue[1:]
+			return true
+		}
 	}
 	return false
 }
