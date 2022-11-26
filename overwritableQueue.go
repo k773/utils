@@ -7,6 +7,10 @@ type OverWritableQueue[T comparable] struct {
 
 	limit int
 	queue []T
+
+	// number of retrieves from each side without shifting data (reset by shifts, pushes, pulls, filtering, clearing)
+	retrievedLeftWithoutShifting  int
+	retrievedRightWithoutShifting int
 }
 
 func NewOverWritableQueue[T comparable](limit int, preallocate bool) *OverWritableQueue[T] {
@@ -30,6 +34,9 @@ func (o *OverWritableQueue[T]) Push(value T) bool {
 	o.queue = append(o.queue, value)
 	if len(o.queue) > o.limit {
 		o.queue = o.queue[1:]
+		// Resetting both counters, as both sides of the slice queue are affected
+		o.retrievedRightWithoutShifting = 0
+		o.retrievedLeftWithoutShifting = 0
 	}
 	return true
 }
@@ -58,6 +65,7 @@ func (o *OverWritableQueue[T]) Get() (val T, success bool) {
 
 	if len(o.queue) != 0 {
 		val, success = o.queue[len(o.queue)-1], true
+		o.retrievedRightWithoutShifting++
 	}
 	return
 }
@@ -69,6 +77,7 @@ func (o *OverWritableQueue[T]) GetLeft() (val T, success bool) {
 
 	if len(o.queue) != 0 {
 		val, success = o.queue[0], true
+		o.retrievedLeftWithoutShifting++
 	}
 	return
 }
@@ -80,7 +89,7 @@ func (o *OverWritableQueue[T]) Pull() (val T, success bool) {
 
 	if len(o.queue) != 0 {
 		val, success = o.queue[len(o.queue)-1], true
-		o.queue = o.queue[:len(o.queue)-1]
+		o.shiftRight()
 	}
 	return
 }
@@ -102,7 +111,7 @@ func (o *OverWritableQueue[T]) ShiftLeft() bool {
 	defer o.guard.Unlock()
 
 	if len(o.queue) != 0 {
-		o.queue = o.queue[1:]
+		o.shiftLeft()
 		return true
 	}
 	return false
@@ -114,8 +123,23 @@ func (o *OverWritableQueue[T]) ShiftLeftIfLeftEquals(v T) bool {
 
 	if len(o.queue) != 0 {
 		if o.queue[0] == v {
-			o.queue = o.queue[1:]
+			o.shiftLeft()
 			return true
+		}
+	}
+	return false
+}
+
+func (o *OverWritableQueue[T]) ShiftLeftIfLeftEqualsAndCounterEqualsOrGreater(v T, leftGreaterOrEqualThan int) bool {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	if len(o.queue) != 0 {
+		if o.queue[0] == v {
+			if o.retrievedLeftWithoutShifting >= leftGreaterOrEqualThan {
+				o.shiftLeft()
+				return true
+			}
 		}
 	}
 	return false
@@ -156,10 +180,28 @@ func (o *OverWritableQueue[T]) Close() {
 	o.queue = nil
 }
 
+/*
+	Unguarded ops
+*/
+
+func (o *OverWritableQueue[T]) shiftLeft() {
+	o.queue = o.queue[1:]
+	o.retrievedLeftWithoutShifting = 0
+
+}
+
+func (o *OverWritableQueue[T]) shiftRight() {
+	o.queue = o.queue[:len(o.queue)-1]
+	o.retrievedRightWithoutShifting = 0
+}
+
 func (o *OverWritableQueue[T]) clear(deallocate bool) {
 	if o.limit == 0 {
 		return
 	}
+
+	o.retrievedLeftWithoutShifting = 0
+	o.retrievedRightWithoutShifting = 0
 
 	if deallocate {
 		o.queue = nil
@@ -168,10 +210,6 @@ func (o *OverWritableQueue[T]) clear(deallocate bool) {
 	}
 }
 
-/*
-	Unguarded ops
-*/
-
 func (o *OverWritableQueue[T]) pushIfLenLessThanCap(value T) bool {
 	if o.limit == 0 {
 		return false
@@ -179,6 +217,7 @@ func (o *OverWritableQueue[T]) pushIfLenLessThanCap(value T) bool {
 
 	if len(o.queue) < o.limit {
 		o.queue = append(o.queue, value)
+		o.retrievedRightWithoutShifting = 0
 		return true
 	} else {
 		return false
@@ -187,10 +226,16 @@ func (o *OverWritableQueue[T]) pushIfLenLessThanCap(value T) bool {
 
 func (o *OverWritableQueue[T]) filter(f func(v T) (keep bool)) {
 	var i = 0
-	for _, v := range o.queue {
+	for si, v := range o.queue {
 		if f(v) {
 			o.queue[i] = v
 			i++
+		} else {
+			if si == 0 {
+				o.retrievedLeftWithoutShifting = 0
+			} else if si == len(o.queue) {
+				o.retrievedRightWithoutShifting = 0
+			}
 		}
 	}
 	o.queue = o.queue[:i]
