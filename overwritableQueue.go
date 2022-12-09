@@ -27,17 +27,7 @@ func (o *OverWritableQueue[T]) Push(value T) bool {
 	o.guard.Lock()
 	defer o.guard.Unlock()
 
-	if o.limit == 0 {
-		return false
-	}
-
-	o.queue = append(o.queue, value)
-	if len(o.queue) > o.limit {
-		o.queue = o.queue[1:]
-		// Resetting both counters, as both sides of the slice queue are affected
-		o.retrievedRightWithoutShifting = 0
-		o.retrievedLeftWithoutShifting = 0
-	}
+	o.push(value)
 	return true
 }
 
@@ -47,6 +37,15 @@ func (o *OverWritableQueue[T]) PushIfLenLessThanCap(value T) bool {
 	defer o.guard.Unlock()
 
 	return o.pushIfLenLessThanCap(value)
+}
+
+// FilterAndPush is an atomic version of the expression: if o.Filter(f); o.Push(value)
+func (o *OverWritableQueue[T]) FilterAndPush(f func(v T) (keep bool), value T) {
+	o.guard.Lock()
+	defer o.guard.Unlock()
+
+	o.filter(f)
+	o.push(value)
 }
 
 // FilterAndPushIfLenLessThanCap is an atomic version of the expression: if o.Filter(f); o.PushIfLenLessThanCap(value)
@@ -222,6 +221,21 @@ func (o *OverWritableQueue[T]) pushIfLenLessThanCap(value T) bool {
 	} else {
 		return false
 	}
+}
+
+func (o *OverWritableQueue[T]) push(value T) bool {
+	if o.limit == 0 {
+		return false
+	}
+
+	o.queue = append(o.queue, value)
+	if len(o.queue) > o.limit {
+		o.queue = o.queue[1:]
+		// Resetting both counters, as both sides of the slice queue are affected
+		o.retrievedRightWithoutShifting = 0
+		o.retrievedLeftWithoutShifting = 0
+	}
+	return true
 }
 
 func (o *OverWritableQueue[T]) filter(f func(v T) (keep bool)) {
