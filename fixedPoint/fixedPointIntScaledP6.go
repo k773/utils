@@ -6,7 +6,10 @@ package fixedPoint
 
 import (
 	"github.com/k773/utils"
+	"github.com/mailru/easyjson/jlexer"
+	"github.com/mailru/easyjson/jwriter"
 	"math"
+	"unsafe"
 )
 
 type IntScaledP6 int64
@@ -24,6 +27,11 @@ const IntScaledP6ZeroPointFive = 500000
 
 func ParseIntScaledP6(src string) IntScaledP6 {
 	a, b, c, n := ParseFixedPointRaw(src, intScaledP6N)
+	return NewIntScaledP6(a, b, c, n)
+}
+
+func ParseIntScaledP6Bytes(src []byte) IntScaledP6 {
+	a, b, c, n := ParseFixedPointRaw(*(*string)(unsafe.Pointer(&src)), intScaledP6N)
 	return NewIntScaledP6(a, b, c, n)
 }
 
@@ -238,6 +246,20 @@ func (i *IntScaledP6) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+func (i *IntScaledP6) UnmarshalEasyJSON(in *jlexer.Lexer) {
+	isTopLevel := in.IsStart()
+	var rawBytes = in.Raw()
+	*i = ParseIntScaledP6(*(*string)(unsafe.Pointer(&rawBytes)))
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+
 func (i IntScaledP6) MarshalJSON() ([]byte, error) {
 	return []byte(i.String()), nil
+}
+
+func (i IntScaledP6) MarshalEasyJSON(w *jwriter.Writer) {
+	var a = i.String()
+	w.Raw(*(*[]byte)(unsafe.Pointer(&a)), nil)
 }
