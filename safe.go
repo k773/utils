@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"golang.org/x/exp/maps"
 	"math/rand"
 	"sync"
 )
@@ -164,15 +165,15 @@ func NewSafeMapFrom[K, V comparable](m map[K]V) *SafeMap[K, V] {
 	return &SafeMap[K, V]{M: m}
 }
 
-type SafeMapGetSetHas[K, V comparable] struct {
+type SafeMapGetSetHas[K comparable, V any] struct {
 	SafeMap[K, V]
 }
 
-func NewSafeMapGetSetHas[K, V comparable]() *SafeMapGetSetHas[K, V] {
+func NewSafeMapGetSetHas[K comparable, V any]() *SafeMapGetSetHas[K, V] {
 	return &SafeMapGetSetHas[K, V]{SafeMap[K, V]{M: make(map[K]V)}}
 }
 
-func NewSafeMapGetSetHasFrom[K, V comparable](m map[K]V) *SafeMapGetSetHas[K, V] {
+func NewSafeMapGetSetHasFrom[K comparable, V any](m map[K]V) *SafeMapGetSetHas[K, V] {
 	return &SafeMapGetSetHas[K, V]{SafeMap[K, V]{M: m}}
 }
 
@@ -221,6 +222,12 @@ func (s *SafeMapGetSetHas[K, V]) Delete(k K, externalLock bool) {
 	}
 
 	delete(s.M, k)
+}
+
+func (s *SafeMapGetSetHas[K, V]) Clone() map[K]V {
+	s.RLock()
+	defer s.RUnlock()
+	return maps.Clone(s.M)
 }
 
 type SafeMapL2[K, K2, V comparable] struct {
