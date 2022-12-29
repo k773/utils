@@ -141,3 +141,30 @@ func (r *RateLimiterV4) Wait(sinceLastRelease time.Duration) {
 	}
 	r.lastRequest = t0.Add(td)
 }
+
+/*
+	Rate limiter v5: RateLimiterV4 with context support
+*/
+
+type RateLimiterV5 struct {
+	l sync.Mutex
+
+	lastRequest time.Time
+}
+
+func NewRateLimiterV5() *RateLimiterV5 {
+	return new(RateLimiterV5)
+}
+
+func (r *RateLimiterV5) Wait(ctx context.Context, sinceLastRelease time.Duration) (e error) {
+	r.l.Lock()
+	defer r.l.Unlock()
+
+	var t0 = time.Now()
+	var td = sinceLastRelease - Clamp(t0.Sub(r.lastRequest), 0, sinceLastRelease)
+	if !r.lastRequest.IsZero() {
+		e = SleepWithContext(ctx, td)
+	}
+	r.lastRequest = t0.Add(td)
+	return
+}
