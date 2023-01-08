@@ -446,3 +446,31 @@ func NewKeyValue[K, V any]() *KeyValue[K, V] {
 func NewKeyValueFrom[K, V any](k K, v V) *KeyValue[K, V] {
 	return &KeyValue[K, V]{K: k, V: v}
 }
+
+/*
+	Tools
+*/
+
+func PullKeysFromMap[K comparable, V any](guard sync.Locker, m map[K]V) []K {
+	guard.Lock()
+	var items = maps.Keys(m)
+	maps.Clear(m)
+	guard.Unlock()
+	return items
+}
+
+func PullValuesFromMap[K comparable, V any](guard sync.Locker, m map[K]V) []V {
+	guard.Lock()
+	var items = maps.Values(m)
+	maps.Clear(m)
+	guard.Unlock()
+	return items
+}
+
+func PullKeyValuesFromMap[K comparable, V any](guard sync.Locker, m map[K]V) map[K]V {
+	guard.Lock()
+	var items = maps.Clone(m)
+	maps.Clear(m)
+	guard.Unlock()
+	return items
+}
