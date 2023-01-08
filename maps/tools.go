@@ -44,3 +44,23 @@ func Clone[T ~map[K]V, K comparable, V any](m T) map[K]V {
 	}
 	return res
 }
+
+func Values[T ~map[K]V, K comparable, V any](m T) []V {
+	var res = make([]V, len(m))
+	var i int
+	for _, v := range m {
+		res[i] = v
+		i++
+	}
+	return res
+}
+
+func Keys[T ~map[K]V, K comparable, V any](m T) []K {
+	var res = make([]K, len(m))
+	var i int
+	for k := range m {
+		res[i] = k
+		i++
+	}
+	return res
+}
