@@ -474,3 +474,51 @@ func PullKeyValuesFromMap[K comparable, V any](guard sync.Locker, m map[K]V) map
 	guard.Unlock()
 	return items
 }
+
+/*
+	Wrapper with custom locker
+*/
+
+type Safe[T any] struct {
+	V any
+
+	LockF     func()
+	UnlockF   func()
+	RLockF    func()
+	RUnlockF  func()
+	TryLockF  func() bool
+	TryRLockF func() bool
+}
+
+func (u *Safe[T]) RLock() {
+	if u.RLockF != nil {
+		u.RLockF()
+	}
+}
+func (u *Safe[T]) RUnlock() {
+	if u.RLockF != nil {
+		u.RUnlockF()
+	}
+}
+func (u *Safe[T]) Lock() {
+	if u.RLockF != nil {
+		u.LockF()
+	}
+}
+func (u *Safe[T]) Unlock() {
+	if u.RLockF != nil {
+		u.UnlockF()
+	}
+}
+func (u *Safe[T]) TryLock() bool {
+	if u.RLockF != nil {
+		return u.TryLockF()
+	}
+	return true
+}
+func (u *Safe[T]) TryRLock() bool {
+	if u.RLockF != nil {
+		return u.TryRLockF()
+	}
+	return true
+}
