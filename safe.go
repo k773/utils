@@ -480,7 +480,7 @@ func PullKeyValuesFromMap[K comparable, V any](guard sync.Locker, m map[K]V) map
 */
 
 type Safe[T any] struct {
-	V any
+	V T
 
 	LockF     func()
 	UnlockF   func()
