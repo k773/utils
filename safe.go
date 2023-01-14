@@ -9,6 +9,15 @@ import (
 	"sync"
 )
 
+type LockerRW interface {
+	RLock()
+	RUnlock()
+	Lock()
+	Unlock()
+	TryLock() bool
+	TryRLock() bool
+}
+
 type unexportedMutex struct {
 	s sync.RWMutex
 }
@@ -22,11 +31,16 @@ func (u *unexportedMutex) RUnlock() {
 func (u *unexportedMutex) Lock() {
 	u.s.Lock()
 }
+
+func (u *unexportedMutex) Unlock() {
+	u.s.Unlock()
+}
+
 func (u *unexportedMutex) TryLock() bool {
 	return u.s.TryLock()
 }
-func (u *unexportedMutex) Unlock() {
-	u.s.Unlock()
+func (u *unexportedMutex) TryRLock() bool {
+	return u.s.TryRLock()
 }
 
 type SafeValue[T any] struct {
@@ -488,6 +502,26 @@ type Safe[T any] struct {
 	RUnlockF  func()
 	TryLockF  func() bool
 	TryRLockF func() bool
+}
+
+func NewSafeFromLocker[T any](v T, guard sync.Locker) *Safe[T] {
+	return &Safe[T]{
+		V:       v,
+		LockF:   guard.Lock,
+		UnlockF: guard.Unlock,
+	}
+}
+
+func NewSafeFromLockerRW[T any](v T, guard LockerRW) *Safe[T] {
+	return &Safe[T]{
+		V:         v,
+		LockF:     guard.Lock,
+		UnlockF:   guard.Unlock,
+		RLockF:    guard.RLock,
+		RUnlockF:  guard.RUnlock,
+		TryLockF:  guard.TryLock,
+		TryRLockF: guard.TryRLock,
+	}
 }
 
 func (u *Safe[T]) RLock() {
