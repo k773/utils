@@ -504,7 +504,14 @@ type Safe[T any] struct {
 	TryRLockF func() bool
 }
 
-func NewSafeFromLocker[T any](v T, guard sync.Locker) *Safe[T] {
+func NewSafeFromLocker[T sync.Locker](v T) *Safe[T] {
+	return &Safe[T]{
+		V:       v,
+		LockF:   v.Lock,
+		UnlockF: v.Unlock,
+	}
+}
+func NewSafeFromLockerComposite[T any](v T, guard sync.Locker) *Safe[T] {
 	return &Safe[T]{
 		V:       v,
 		LockF:   guard.Lock,
@@ -512,7 +519,19 @@ func NewSafeFromLocker[T any](v T, guard sync.Locker) *Safe[T] {
 	}
 }
 
-func NewSafeFromLockerRW[T any](v T, guard LockerRW) *Safe[T] {
+func NewSafeFromLockerRW[T LockerRW](v T) *Safe[T] {
+	return &Safe[T]{
+		V:         v,
+		LockF:     v.Lock,
+		UnlockF:   v.Unlock,
+		RLockF:    v.RLock,
+		RUnlockF:  v.RUnlock,
+		TryLockF:  v.TryLock,
+		TryRLockF: v.TryRLock,
+	}
+}
+
+func NewSafeFromLockerRWComposite[T any](v T, guard LockerRW) *Safe[T] {
 	return &Safe[T]{
 		V:         v,
 		LockF:     guard.Lock,
