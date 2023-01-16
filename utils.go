@@ -18,6 +18,7 @@ import (
 	"net"
 	"net/url"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -1510,4 +1511,16 @@ func ReplaceAllSlashNSlashR[T []byte | string](in T) T {
 
 func NewLoggerDiscard() *log.Logger {
 	return log.New(io.Discard, "", 0)
+}
+
+func JsonMustDecode[T any](decoder *json.Decoder) (v T, e error) {
+	token, e := decoder.Token()
+	if e == nil {
+		var ok bool
+		if v, ok = token.(T); !ok {
+			var ex T
+			e = errors.New("invalid type argument: " + fmt.Sprintf("%v", token) + " (expected: " + reflect.TypeOf(ex).String() + ", received: " + reflect.TypeOf(token).String() + ")")
+		}
+	}
+	return
 }
