@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/sha256"
@@ -18,7 +19,6 @@ import (
 	"net"
 	"net/url"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -106,6 +106,16 @@ type SliceTools struct {
 func Marshal(a interface{}) (b []byte) {
 	b, _ = json.Marshal(a)
 	return
+}
+
+func BeautyMarshal(a any) (b []byte) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+
+	_ = encoder.Encode(a)
+	return buffer.Bytes()
 }
 
 func WaitChanAny[T comparable, T2 comparable](ch1 <-chan T, ch2 <-chan T2) {
@@ -1514,13 +1524,6 @@ func NewLoggerDiscard() *log.Logger {
 }
 
 func JsonMustDecode[T any](decoder *json.Decoder) (v T, e error) {
-	token, e := decoder.Token()
-	if e == nil {
-		var ok bool
-		if v, ok = token.(T); !ok {
-			var ex T
-			e = errors.New("invalid type argument: " + fmt.Sprintf("%v", token) + " (expected: " + reflect.TypeOf(ex).String() + ", received: " + reflect.TypeOf(token).String() + ")")
-		}
-	}
+	e = decoder.Decode(&v)
 	return
 }
