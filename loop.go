@@ -128,3 +128,11 @@ func DelayedExecution(ctx context.Context, wg *sync.WaitGroup, executeOnParentCa
 		}
 	}
 }
+
+func ExecuteWitWGAsync(w *sync.WaitGroup, f func()) {
+	w.Add(1)
+	go func() {
+		defer w.Done()
+		f()
+	}()
+}
