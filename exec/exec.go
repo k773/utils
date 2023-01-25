@@ -28,13 +28,19 @@ func CombinedOutputWithContext(ctx context.Context, cmd *exec.Cmd) (output []byt
 
 		if e = cmd.Start(); e == nil {
 			// Planning interruption
+			var interruptionError error
 			goRun(func() {
 				select {
 				case <-ctx.Done():
+					interruptionError = ctx.Err()
 					_ = InterruptProcess(cmd.Process.Pid)
 				}
 			})
 			e = cmd.Wait()
+			// If the child was killed due to the context expiration, preserve the error
+			if interruptionError != nil {
+				e = interruptionError
+			}
 		}
 	}
 

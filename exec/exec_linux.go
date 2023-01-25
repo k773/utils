@@ -10,4 +10,4 @@ func interruptProcess(pid int) (e error) {
 	return syscall.Kill(pid, syscall.SIGINT)
 }
 
-func setupWithFlagsForInterruption(cmd *exec.Cmd) {}
+func setupAttributesForInterruption(cmd *exec.Cmd) {}
