@@ -8,7 +8,7 @@ import (
 func interruptProcess(pid int) (e error) {
 	// Sending CTRL_BREAK_EVENT on windows (src: https://github.com/golang/go/blob/master/src/os/signal/signal_windows_test.go)
 	d, e := syscall.LoadDLL("kernel32.dll")
-	if e == nil {
+	if e != nil {
 		return
 	}
 	p, e := d.FindProc("GenerateConsoleCtrlEvent")
