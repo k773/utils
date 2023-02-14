@@ -5,6 +5,14 @@ import (
 	"unsafe"
 )
 
+func RandStringMust(reader io.Reader, length int) (res string) {
+	res, e := RandString(reader, length)
+	if e != nil {
+		panic(e)
+	}
+	return res
+}
+
 // RandString generates random string of characters [0-9a-Z]
 func RandString(reader io.Reader, length int) (res string, e error) {
 	// 10 + 26 + 26 = 62
