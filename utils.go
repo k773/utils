@@ -13,10 +13,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/k773/utils/maps"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/net/proxy"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -1420,6 +1422,20 @@ func AssertV[T comparable](v, expect T) {
 	if v != expect {
 		panic(fmt.Sprintf("asset failed: expected: %v, received: %v", expect, v))
 	}
+}
+
+func RestySetHeadersSafe(ses *resty.Client, headers map[string]string) {
+	var cloned = http.Header(maps.Clone(ses.Header))
+	for k, v := range headers {
+		cloned.Set(k, v)
+	}
+	ses.Header = cloned
+}
+
+func RestySetHeaderSafe(ses *resty.Client, key string, value string) {
+	var cloned = http.Header(maps.Clone(ses.Header))
+	cloned.Set(key, value)
+	ses.Header = cloned
 }
 
 // ParseAuthorizationUrl parses the url in the following format: scheme://login:password@host
