@@ -13,12 +13,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"github.com/k773/utils/maps"
 	"github.com/valyala/fasthttp"
+	"golang.org/x/exp/maps"
 	"golang.org/x/net/proxy"
 	"log"
 	"net"
-	"net/http"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -1425,7 +1424,7 @@ func AssertV[T comparable](v, expect T) {
 }
 
 func RestySetHeadersSafe(ses *resty.Client, headers map[string]string) {
-	var cloned = http.Header(maps.Clone(ses.Header))
+	var cloned = maps.Clone(ses.Header)
 	for k, v := range headers {
 		cloned.Set(k, v)
 	}
@@ -1433,7 +1432,7 @@ func RestySetHeadersSafe(ses *resty.Client, headers map[string]string) {
 }
 
 func RestySetHeaderSafe(ses *resty.Client, key string, value string) {
-	var cloned = http.Header(maps.Clone(ses.Header))
+	var cloned = maps.Clone(ses.Header)
 	cloned.Set(key, value)
 	ses.Header = cloned
 }
