@@ -7,6 +7,9 @@ import (
 	"sync"
 )
 
+// Cond
+// Warning: in the current implementation nothing prevents data from changing in between the moment we receive notification from the channel
+// and the moment we obtain a data lock (c.L.Lock() in Wait()). Use sync/cond.
 type Cond struct {
 	L  sync.Locker
 	ch chan struct{}

@@ -244,6 +244,12 @@ func (s *SafeMapGetSetHas[K, V]) Clone() map[K]V {
 	return maps.Clone(s.M)
 }
 
+func (s *SafeMapGetSetHas[K, V]) Swap(v map[K]V) {
+	s.Lock()
+	defer s.Unlock()
+	s.M = v
+}
+
 type SafeMapL2[K, K2, V comparable] struct {
 	M map[K]map[K2]V
 	unexportedMutex
