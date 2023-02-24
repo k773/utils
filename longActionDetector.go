@@ -7,6 +7,10 @@ type LongActionDetector struct {
 	c           chan struct{}
 }
 
+func NewLongActionDetector(timeout time.Duration) *LongActionDetector {
+	return &LongActionDetector{maxDuration: timeout}
+}
+
 func (l *LongActionDetector) Tick(timeout func()) {
 	var t = time.NewTicker(l.maxDuration)
 	go func() {
