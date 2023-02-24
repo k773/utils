@@ -12,7 +12,7 @@ func NewLongActionDetector(timeout time.Duration) *LongActionDetector {
 }
 
 func (l *LongActionDetector) Tick(timeout func()) {
-	var t = time.NewTicker(l.maxDuration)
+	var t = time.NewTimer(l.maxDuration)
 	go func() {
 		select {
 		case <-t.C:
