@@ -12,6 +12,7 @@ func NewLongActionDetector(timeout time.Duration) *LongActionDetector {
 }
 
 func (l *LongActionDetector) Tick(timeout func()) {
+	l.c = make(chan struct{})
 	var t = time.NewTimer(l.maxDuration)
 	go func() {
 		select {
