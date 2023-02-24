@@ -17,12 +17,11 @@ func (l *LongActionDetector) Tick(timeout func()) {
 	go func() {
 		select {
 		case <-t.C:
-			close(l.c)
 			timeout()
 		case <-l.c:
 		}
+		t.Stop()
 	}()
-	t.Stop()
 }
 
 func (l *LongActionDetector) Done() {
