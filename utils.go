@@ -1542,3 +1542,17 @@ func JsonMustDecode[T any](decoder *json.Decoder) (v T, e error) {
 	e = decoder.Decode(&v)
 	return
 }
+
+func SliceIterator[T any](arr []T) func() T {
+	var i = 0
+	return func() (v T) {
+		if len(arr) > 0 {
+			if i == len(arr) {
+				i = 0
+			}
+			v = arr[i]
+			i++
+		}
+		return v
+	}
+}
