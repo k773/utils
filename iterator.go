@@ -34,3 +34,23 @@ func (rcv *IteratorF[srcT, dstT]) IterateFCond(iter func(dstT) bool) {
 		}
 	}
 }
+
+/*
+	Simple 'foreach' iterator
+*/
+
+func ForEachSlice[T any](slice []T, f func(v T) (wantMore bool), reverse bool) {
+	if !reverse {
+		for _, v := range slice {
+			if !f(v) {
+				break
+			}
+		}
+	} else {
+		for i := len(slice) - 1; i >= 0; i-- {
+			if !f(slice[i]) {
+				break
+			}
+		}
+	}
+}
