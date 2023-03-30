@@ -1437,6 +1437,16 @@ func RestySetHeaderSafe(ses *resty.Client, key string, value string) {
 	ses.Header = cloned
 }
 
+func RestySetContext(ctx context.Context, ses *resty.Client) {
+	ses.OnBeforeRequest(func(client *resty.Client, request *resty.Request) error {
+		if e := ctx.Err(); e != nil {
+			return e
+		}
+		request.SetContext(ctx)
+		return nil
+	})
+}
+
 // ParseAuthorizationUrl parses the url in the following format: scheme://login:password@host
 // Also works on proxies.
 // If no scheme present, an error will be returned.
