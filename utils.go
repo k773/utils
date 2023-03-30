@@ -1437,8 +1437,8 @@ func RestySetHeaderSafe(ses *resty.Client, key string, value string) {
 	ses.Header = cloned
 }
 
-func RestySetContext(ctx context.Context, ses *resty.Client) {
-	ses.OnBeforeRequest(func(client *resty.Client, request *resty.Request) error {
+func RestySetContext(ctx context.Context, ses *resty.Client) *resty.Client {
+	return ses.OnBeforeRequest(func(client *resty.Client, request *resty.Request) error {
 		if e := ctx.Err(); e != nil {
 			return e
 		}
