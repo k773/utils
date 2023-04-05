@@ -40,13 +40,13 @@ func (*LinuxHwTools) GetDiskSpace(mnt ...string) (usage float64, free, used, tot
 }
 
 // GetIOStats Parses info from /proc/pid/io:
-//rchar: 4086576068
-//wchar: 5667644758219
-//syscr: 18960
-//syscw: 619175514
-//read_bytes: 5739536384
-//write_bytes: 10860712153088
-//cancelled_write_bytes: 41168896
+// rchar: 4086576068
+// wchar: 5667644758219
+// syscr: 18960
+// syscw: 619175514
+// read_bytes: 5739536384
+// write_bytes: 10860712153088
+// cancelled_write_bytes: 41168896
 func (*LinuxHwTools) GetIOStats(pid int) (m map[string]int64) {
 	m = map[string]int64{}
 
@@ -191,6 +191,15 @@ func (*LinuxHwTools) GetTrafficSample(interface_ string) (rx, tx int64, e error)
 		} else {
 			e = errors.New("wrong output split")
 		}
+	}
+	return
+}
+
+// GetPrimaryNetworkInterface returns the name of an interface through which traffic goes to 8.8.8.8
+func (l *LinuxHwTools) GetPrimaryNetworkInterface() (iface string, e error) {
+	var out []byte
+	if out, e = exec.Command("/bin/sh", "-c", `ip route get 8.8.8.8 | sed -n 's/.*dev \([^\ ]*\).*/\1/p'`).Output(); e == nil {
+		iface = string(out)
 	}
 	return
 }
