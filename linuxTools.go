@@ -182,7 +182,7 @@ func (l *LinuxHwTools) GetTraffic(interface_ string, d time.Duration) (rx, tx in
 
 func (*LinuxHwTools) GetTrafficSample(interface_ string) (rx, tx int64, e error) {
 	var out []byte
-	if out, e = exec.Command("/bin/sh", "-c", `ip -s -c link show `+interface_+` | sed -n -e 4p -e 6p |  cut -d " " -f5`).Output(); e == nil {
+	if out, e = exec.Command("/bin/sh", "-c", `ip -s -c link show `+interface_+` | sed -n -e 4p -e 6p | awk '{print $1;}'`).Output(); e == nil {
 		if s := strings.Split(string(out), "\n"); len(s) >= 2 {
 			var e1, e2 error
 			rx, e1 = strconv.ParseInt(s[0], 10, 64)
