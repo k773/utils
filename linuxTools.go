@@ -199,7 +199,7 @@ func (*LinuxHwTools) GetTrafficSample(interface_ string) (rx, tx int64, e error)
 func (l *LinuxHwTools) GetPrimaryNetworkInterface() (iface string, e error) {
 	var out []byte
 	if out, e = exec.Command("/bin/sh", "-c", `ip route get 8.8.8.8 | sed -n 's/.*dev \([^\ ]*\).*/\1/p'`).Output(); e == nil {
-		iface = string(out)
+		iface = strings.TrimSpace(string(out))
 	}
 	return
 }
