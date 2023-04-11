@@ -169,24 +169,24 @@ func (l *LinuxHwTools) CalculateTraffic(interface_ string, d time.Duration) (rx,
 	return float64(rx2) / float64(d/time.Second), float64(tx2) / float64(d/time.Second), e
 }
 
-func (l *LinuxHwTools) GetTraffic(interface_ string, d time.Duration) (rx, tx int64, e error) {
-	if rx, tx, e = l.GetTrafficSample(interface_); e == nil {
+func (l *LinuxHwTools) GetTraffic(interface_ string, d time.Duration) (rxBytes, txBytes int64, e error) {
+	if rxBytes, txBytes, e = l.GetTrafficSample(interface_); e == nil {
 		time.Sleep(d)
 		var rx2, tx2 int64
 		if rx2, tx2, e = l.GetTrafficSample(interface_); e == nil {
-			rx, tx = rx2-rx, tx2-tx
+			rxBytes, txBytes = rx2-rxBytes, tx2-txBytes
 		}
 	}
 	return
 }
 
-func (*LinuxHwTools) GetTrafficSample(interface_ string) (rx, tx int64, e error) {
+func (*LinuxHwTools) GetTrafficSample(interface_ string) (rxBytes, txBytes int64, e error) {
 	var out []byte
 	if out, e = exec.Command("/bin/sh", "-c", `ip -s -c link show `+interface_+` | sed -n -e 4p -e 6p | awk '{print $1;}'`).Output(); e == nil {
 		if s := strings.Split(string(out), "\n"); len(s) >= 2 {
 			var e1, e2 error
-			rx, e1 = strconv.ParseInt(s[0], 10, 64)
-			tx, e2 = strconv.ParseInt(s[1], 10, 64)
+			rxBytes, e1 = strconv.ParseInt(s[0], 10, 64)
+			txBytes, e2 = strconv.ParseInt(s[1], 10, 64)
 			e = JoinErrors(e1, e2)
 		} else {
 			e = errors.New("wrong output split")
