@@ -7,6 +7,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/k773/utils"
 	"github.com/k773/utils/captcha/types"
+	"github.com/k773/utils/fixedPoint"
 	"github.com/pkg/errors"
 	"strconv"
 	"time"
@@ -32,6 +33,7 @@ func New(s *resty.Client, key string, logger ...*utils.Logger) *AntiCaptcha {
 const (
 	antiCaptchaCreateTaskUrl    = "https://api.anti-captcha.com/createTask"
 	antiCaptchaGetTaskResultUrl = "https://api.anti-captcha.com/getTaskResult"
+	antiCaptchaGetBalanceUrl    = "https://api.anti-captcha.com/getBalance"
 
 	antiCaptchaTypeRecaptchaV2EnterpriseProxyless = "RecaptchaV2EnterpriseTaskProxyless"
 	antiCaptchaTypeRecaptchaV2EnterpriseProxy     = "RecaptchaV2EnterpriseTask"
@@ -72,8 +74,12 @@ type antiCaptchaTaskRequest struct {
 	ApiDomain string `json:"apiDomain,omitempty"`
 }
 
+type antiCaptchaRequest struct {
+	ClientKey string `json:"clientKey"`
+}
+
 type antiCaptchaNewTaskRequest struct {
-	ClientKey    string                 `json:"clientKey"`
+	antiCaptchaRequest
 	Task         antiCaptchaTaskRequest `json:"task"`
 	SoftID       int                    `json:"softId"`
 	LanguagePool string                 `json:"languagePool"`
@@ -112,11 +118,28 @@ type CaptchaResult struct {
 	SolveCount int    `json:"solveCount"`
 }
 
-type antiCaptchaReportResult struct {
+type antiCaptchaErrorResponse struct {
 	ErrorID          int    `json:"errorId"`
 	ErrorCode        string `json:"errorCode"`
 	ErrorDescription string `json:"errorDescription"`
-	Status           string `json:"status"`
+}
+
+type antiCaptchaGetBalanceResult struct {
+	antiCaptchaErrorResponse
+	Balance fixedPoint.IntScaledP6 `json:"balance"`
+}
+
+type antiCaptchaReportResult struct {
+	antiCaptchaErrorResponse
+	Status string `json:"status"`
+}
+
+func (ae *antiCaptchaErrorResponse) isError() bool {
+	return ae.ErrorID != 0
+}
+
+func (ae *antiCaptchaErrorResponse) Error() string {
+	return ae.ErrorCode + ": " + ae.ErrorDescription
 }
 
 func (a *AntiCaptcha) waitForResponse(ctx context.Context, acType, sitekey, siteUrl string, newTaskResponseB []byte) (res types.CaptchaResult, e error) {
@@ -176,7 +199,7 @@ func (a *AntiCaptcha) SolveRecaptchaV2(ctx context.Context, websiteKey, websiteU
 
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.Key,
+			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
 			Task: antiCaptchaTaskRequest{
 				Type:          taskType,
 				WebsiteURL:    websiteUrl,
@@ -216,7 +239,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey
 
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.Key,
+			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
 			Task: antiCaptchaTaskRequest{
 				Type:              taskType,
 				WebsiteURL:        websiteUrl,
@@ -257,7 +280,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, webs
 
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.Key,
+			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
 			Task: antiCaptchaTaskRequest{
 				Type:              taskType,
 				WebsiteURL:        websiteUrl,
@@ -287,7 +310,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2Domain(ctx context.Context, webs
 func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCaptchaResponse types.CaptchaResult, e error) {
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
-			ClientKey: a.Key,
+			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
 			Task: antiCaptchaTaskRequest{
 				Type:      antiCaptchaTypeImageToText,
 				Body:      base64.StdEncoding.EncodeToString(img),
@@ -307,6 +330,23 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 		antiCaptchaResponse = new(CaptchaResult)
 	}
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
+}
+
+func (a *AntiCaptcha) GetBalance(ctx context.Context) (balance fixedPoint.IntScaledP6, e error) {
+	resp, e := a.s.R().SetContext(ctx).
+		SetBody(antiCaptchaRequest{ClientKey: a.Key}).
+		Post(antiCaptchaGetBalanceUrl)
+
+	if e == nil {
+		var res antiCaptchaGetBalanceResult
+		if e = json.Unmarshal(resp.Body(), &res); e == nil {
+			balance = res.Balance
+			if res.isError() {
+				e = &res
+			}
+		}
+	}
+	return balance, errors.Wrap(e, "GetBalance")
 }
 
 func (cr *CaptchaResult) Report(ctx context.Context, good bool) error {
