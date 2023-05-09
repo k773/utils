@@ -198,6 +198,10 @@ func (s *SafeNumericValueTools[T]) SetIfLesserOrEquals(v, ifLesserOrEqualsThanTh
 	return r
 }
 
+/*
+	SafeMap
+*/
+
 type SafeMap[K comparable, V any] struct {
 	M map[K]V
 	unexportedMutex
@@ -210,6 +214,38 @@ func NewSafeMap[K comparable, V any]() *SafeMap[K, V] {
 func NewSafeMapFrom[K, V comparable](m map[K]V) *SafeMap[K, V] {
 	return &SafeMap[K, V]{M: m}
 }
+
+/*
+	SafeMapJ
+*/
+
+type SafeMapJ[K comparable, V any] struct {
+	M map[K]V
+	unexportedMutex
+}
+
+func NewSafeMapJ[K comparable, V any]() *SafeMapJ[K, V] {
+	return &SafeMapJ[K, V]{M: make(map[K]V)}
+}
+
+func NewSafeMapFromJ[K, V comparable](m map[K]V) *SafeMapJ[K, V] {
+	return &SafeMapJ[K, V]{M: m}
+}
+
+func (s *SafeMapJ[K, V]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.M)
+}
+
+func (s *SafeMapJ[K, V]) UnmarshalJSON(data []byte) error {
+	if s.M == nil {
+		s.M = map[K]V{}
+	}
+	return json.Unmarshal(data, &s.M)
+}
+
+/*
+	SafeMapGetSetHas
+*/
 
 type SafeMapGetSetHas[K comparable, V any] struct {
 	SafeMap[K, V]
