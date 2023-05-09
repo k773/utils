@@ -233,10 +233,16 @@ func NewSafeMapFromJ[K, V comparable](m map[K]V) *SafeMapJ[K, V] {
 }
 
 func (s *SafeMapJ[K, V]) MarshalJSON() ([]byte, error) {
+	s.s.Lock()
+	defer s.s.Unlock()
+
 	return json.Marshal(s.M)
 }
 
 func (s *SafeMapJ[K, V]) UnmarshalJSON(data []byte) error {
+	s.s.Lock()
+	defer s.s.Unlock()
+
 	if s.M == nil {
 		s.M = map[K]V{}
 	}
