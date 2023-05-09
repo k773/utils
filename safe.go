@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"golang.org/x/exp/maps"
 	"math/rand"
@@ -55,6 +56,37 @@ func NewSafeValue[T any]() *SafeValue[T] {
 func NewSafeValueFrom[T any](a T) *SafeValue[T] {
 	return &SafeValue[T]{V: a}
 }
+
+/*
+	SafeValueJ
+*/
+
+// SafeValueJ is a mutex-guarded safe value, with custom json encoder/decoder.
+// It marshals/unmarshals the same way the underlying type does.
+type SafeValueJ[T any] struct {
+	V T
+	unexportedMutex
+}
+
+func NewSafeValueJ[T any]() *SafeValueJ[T] {
+	return &SafeValueJ[T]{}
+}
+
+func NewSafeValueJFrom[T any](a T) *SafeValueJ[T] {
+	return &SafeValueJ[T]{V: a}
+}
+
+func (s *SafeValueJ[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.V)
+}
+
+func (s *SafeValueJ[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &s.V)
+}
+
+/*
+	SafeValueTools
+*/
 
 type SafeValueTools[T comparable] struct {
 	SafeValue[T]
