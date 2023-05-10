@@ -143,3 +143,9 @@ func WithLock(s sync.Locker, f func()) func() {
 		defer s.Unlock()
 	}
 }
+
+func WithLockDo(s sync.Locker, f func()) {
+	s.Lock()
+	defer s.Unlock()
+	f()
+}
