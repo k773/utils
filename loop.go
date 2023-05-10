@@ -137,16 +137,16 @@ func ExecuteWitWGAsync(w *sync.WaitGroup, f func()) {
 	}()
 }
 
-func WithLock(s sync.Locker, f func()) func() {
+func WithLock(s sync.Locker, f func()) {
+	s.Lock()
+	defer s.Unlock()
+	f()
+}
+
+func WithLockF(s sync.Locker, f func()) func() {
 	return func() {
 		s.Lock()
 		defer s.Unlock()
 		f()
 	}
-}
-
-func WithLockDo(s sync.Locker, f func()) {
-	s.Lock()
-	defer s.Unlock()
-	f()
 }
