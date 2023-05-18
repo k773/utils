@@ -41,8 +41,9 @@ const (
 	antiCaptchaTypeRecaptchaV2Proxyless = "RecaptchaV2TaskProxyless"
 	antiCaptchaTypeRecaptchaV2Proxy     = "RecaptchaV2Task"
 
-	antiCaptchaTypeImageToText             = "ImageToTextTask"
-	antiCaptchaTypeFunCaptchaTaskProxyless = "FunCaptchaTaskProxyless"
+	antiCaptchaTypeImageToText         = "ImageToTextTask"
+	antiCaptchaTypeFunCaptcha          = "FunCaptchaTask"
+	antiCaptchaTypeFunCaptchaProxyless = "FunCaptchaTaskProxyless"
 )
 
 type antiCaptchaEnterprisePayload struct {
@@ -335,20 +336,33 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
 }
 
-func (a *AntiCaptcha) SolveFunCaptchaProxyless(ctx context.Context, sitePublicKey, siteUrl string) (antiCaptchaResponse types.CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveFunCaptcha(ctx context.Context, sitePublicKey, siteUrl string, proxy *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
+	var taskType = antiCaptchaTypeFunCaptcha
+	if proxy == nil {
+		taskType = antiCaptchaTypeFunCaptchaProxyless
+		proxy = &utils.ProxyData{}
+	}
+
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
 			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
 			Task: antiCaptchaTaskRequest{
-				Type:             antiCaptchaTypeFunCaptchaTaskProxyless,
+				Type:             taskType,
 				WebsiteURL:       siteUrl,
 				WebsitePublicKey: sitePublicKey,
+
+				ProxyType:     proxy.ProxyType,
+				ProxyAddress:  proxy.ProxyAddress,
+				ProxyPort:     proxy.ProxyPort,
+				ProxyLogin:    proxy.ProxyLogin,
+				ProxyPassword: proxy.ProxyPassword,
+				UserAgent:     proxy.UserAgent,
 			},
 			SoftID: 994,
 		}).Post(antiCaptchaCreateTaskUrl)
 
 	if e == nil {
-		antiCaptchaResponse, e = a.waitForResponse(ctx, antiCaptchaTypeFunCaptchaTaskProxyless, "none(image)", "none(image)", resp.Body())
+		antiCaptchaResponse, e = a.waitForResponse(ctx, taskType, "none(image)", "none(image)", resp.Body())
 	} else {
 		antiCaptchaResponse = new(CaptchaResult)
 	}
@@ -420,7 +434,7 @@ func (cr *CaptchaResult) Result() string {
 	case antiCaptchaTypeRecaptchaV2EnterpriseProxy, antiCaptchaTypeRecaptchaV2EnterpriseProxyless,
 		antiCaptchaTypeRecaptchaV2Proxy, antiCaptchaTypeRecaptchaV2Proxyless:
 		return cr.Solution.GRecaptchaResponse
-	case antiCaptchaTypeFunCaptchaTaskProxyless:
+	case antiCaptchaTypeFunCaptchaProxyless, antiCaptchaTypeFunCaptcha:
 		return cr.Solution.Token
 	case antiCaptchaTypeImageToText:
 		return cr.Solution.Text
