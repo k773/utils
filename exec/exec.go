@@ -33,7 +33,7 @@ func CombinedOutputWithContext(ctx context.Context, cmd *exec.Cmd) (output []byt
 				select {
 				case <-ctx.Done():
 					interruptionError = ctx.Err()
-					_ = InterruptProcess(cmd.Process.Pid)
+					_ = InterruptProcess(cmd)
 				}
 			})
 			e = cmd.Wait()
@@ -51,11 +51,16 @@ func CombinedOutputWithContext(ctx context.Context, cmd *exec.Cmd) (output []byt
 	return
 }
 
-// InterruptProcess sends different signals depending on the os:
+// InterruptProcess is a convenience wrapper for InterruptProcessPid
+func InterruptProcess(cmd *exec.Cmd) error {
+	return InterruptProcessPID(cmd.Process.Pid)
+}
+
+// InterruptProcessPID sends different signals depending on the os:
 // on Linux: sends SIGINT
 // on Windows: sends CTRL_BREAK_EVENT, child process needs to be started with syscall.CREATE_NEW_PROCESS_GROUP, otherwise parent will receive this event too
-func InterruptProcess(pid int) (e error) {
-	return interruptProcess(pid)
+func InterruptProcessPID(pid int) (e error) {
+	return interruptProcessPID(pid)
 }
 
 // SetupAttributesForInterruption should be called before cmd.Start() is called; sets up correct cmd's interruption behaviour:

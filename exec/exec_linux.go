@@ -5,7 +5,7 @@ import (
 	"syscall"
 )
 
-func interruptProcess(pid int) (e error) {
+func interruptProcessPID(pid int) (e error) {
 	// Sending SIGINT on linux
 	return syscall.Kill(pid, syscall.SIGINT)
 }
