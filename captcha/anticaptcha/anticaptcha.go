@@ -41,7 +41,8 @@ const (
 	antiCaptchaTypeRecaptchaV2Proxyless = "RecaptchaV2TaskProxyless"
 	antiCaptchaTypeRecaptchaV2Proxy     = "RecaptchaV2Task"
 
-	antiCaptchaTypeImageToText = "ImageToTextTask"
+	antiCaptchaTypeImageToText             = "ImageToTextTask"
+	antiCaptchaTypeFunCaptchaTaskProxyless = "FunCaptchaTaskProxyless"
 )
 
 type antiCaptchaEnterprisePayload struct {
@@ -49,9 +50,10 @@ type antiCaptchaEnterprisePayload struct {
 }
 
 type antiCaptchaTaskRequest struct {
-	Type       string `json:"type"`
-	WebsiteURL string `json:"websiteURL,omitempty"`
-	WebsiteKey string `json:"websiteKey,omitempty"`
+	Type             string `json:"type"`
+	WebsiteURL       string `json:"websiteURL,omitempty"`
+	WebsiteKey       string `json:"websiteKey,omitempty"`
+	WebsitePublicKey string `json:"websitePublicKey,omitempty"`
 
 	EnterprisePayload *antiCaptchaEnterprisePayload `json:"enterprisePayload,omitempty"`
 
@@ -107,6 +109,7 @@ type CaptchaResult struct {
 	ErrorDescription string `json:"errorDescription"`
 	Status           string `json:"status"`
 	Solution         struct {
+		Token              string `json:"token"`
 		GRecaptchaResponse string `json:"gRecaptchaResponse"`
 		Text               string `json:"text"`
 		URL                string `json:"url"`
@@ -332,6 +335,26 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
 }
 
+func (a *AntiCaptcha) SolveFunCaptchaProxyless(ctx context.Context, siteKey, siteUrl string) (antiCaptchaResponse types.CaptchaResult, e error) {
+	resp, e := a.s.R().SetContext(ctx).
+		SetBody(antiCaptchaNewTaskRequest{
+			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
+			Task: antiCaptchaTaskRequest{
+				Type:       antiCaptchaTypeFunCaptchaTaskProxyless,
+				WebsiteURL: siteUrl,
+				WebsiteKey: siteKey,
+			},
+			SoftID: 994,
+		}).Post(antiCaptchaCreateTaskUrl)
+
+	if e == nil {
+		antiCaptchaResponse, e = a.waitForResponse(ctx, antiCaptchaTypeImageToText, "none(image)", "none(image)", resp.Body())
+	} else {
+		antiCaptchaResponse = new(CaptchaResult)
+	}
+	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
+}
+
 func (a *AntiCaptcha) GetBalance(ctx context.Context) (balance fixedPoint.IntScaledP6, e error) {
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaRequest{ClientKey: a.Key}).
@@ -397,6 +420,8 @@ func (cr *CaptchaResult) Result() string {
 	case antiCaptchaTypeRecaptchaV2EnterpriseProxy, antiCaptchaTypeRecaptchaV2EnterpriseProxyless,
 		antiCaptchaTypeRecaptchaV2Proxy, antiCaptchaTypeRecaptchaV2Proxyless:
 		return cr.Solution.GRecaptchaResponse
+	case antiCaptchaTypeFunCaptchaTaskProxyless:
+		return cr.Solution.Token
 	case antiCaptchaTypeImageToText:
 		return cr.Solution.Text
 	default:
