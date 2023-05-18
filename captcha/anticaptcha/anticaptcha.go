@@ -348,7 +348,7 @@ func (a *AntiCaptcha) SolveFunCaptchaProxyless(ctx context.Context, sitePublicKe
 		}).Post(antiCaptchaCreateTaskUrl)
 
 	if e == nil {
-		antiCaptchaResponse, e = a.waitForResponse(ctx, antiCaptchaTypeImageToText, "none(image)", "none(image)", resp.Body())
+		antiCaptchaResponse, e = a.waitForResponse(ctx, antiCaptchaTypeFunCaptchaTaskProxyless, "none(image)", "none(image)", resp.Body())
 	} else {
 		antiCaptchaResponse = new(CaptchaResult)
 	}
