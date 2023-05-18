@@ -335,14 +335,14 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
 }
 
-func (a *AntiCaptcha) SolveFunCaptchaProxyless(ctx context.Context, siteKey, siteUrl string) (antiCaptchaResponse types.CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveFunCaptchaProxyless(ctx context.Context, sitePublicKey, siteUrl string) (antiCaptchaResponse types.CaptchaResult, e error) {
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaNewTaskRequest{
 			antiCaptchaRequest: antiCaptchaRequest{ClientKey: a.Key},
 			Task: antiCaptchaTaskRequest{
-				Type:       antiCaptchaTypeFunCaptchaTaskProxyless,
-				WebsiteURL: siteUrl,
-				WebsiteKey: siteKey,
+				Type:             antiCaptchaTypeFunCaptchaTaskProxyless,
+				WebsiteURL:       siteUrl,
+				WebsitePublicKey: sitePublicKey,
 			},
 			SoftID: 994,
 		}).Post(antiCaptchaCreateTaskUrl)
