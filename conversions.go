@@ -1,6 +1,10 @@
 package utils
 
-import "unsafe"
+import (
+	"fmt"
+	"reflect"
+	"unsafe"
+)
 
 func Int2strFast(i int) string {
 	const bufSize = 20 // Max string length is 20sym (ui64=19sym + minus if neg)
@@ -48,4 +52,30 @@ func Uint2strFast(i uint) string {
 		}
 	}
 	return (*(*string)(unsafe.Pointer(&buf)))[n:]
+}
+
+func ToString(v any) string {
+	var reflV = ReflectDereference(v)
+
+	// Detecting fmt.Stringer, Error()
+	var canInterfaceToString = func(v reflect.Value) bool {
+		if v.CanInterface() {
+			var i = v.Interface()
+			if _, ok := i.(fmt.Stringer); ok {
+				return ok
+			}
+			if _, ok := i.(error); ok {
+				return ok
+			}
+		}
+		return false
+	}
+
+	if !reflV.CanAddr() && !canInterfaceToString(reflV) {
+		var newReflV = reflect.New(reflV.Type())
+		if canInterfaceToString(newReflV) {
+			reflV = newReflV
+		}
+	}
+	return fmt.Sprintf("%v", reflV)
 }

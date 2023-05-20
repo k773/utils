@@ -1,117 +1,110 @@
 package twocaptcha
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/k773/utils"
-	"github.com/pkg/errors"
-	"strconv"
-	"strings"
+	"github.com/k773/utils/fixedPoint"
 	"time"
 )
 
-type TwoCaptcha struct {
-	s   *resty.Client
-	key string
+const (
+	endpointIn  = "https://2captcha.com/in.php"
+	endpointRes = "https://2captcha.com/res.php"
+)
+
+/*
+	API
+*/
+
+type Client struct {
+	Key string
+	Ses *resty.Client
+	// PollInterval defines frequency of requests for Wait() fn.
+	// Default: 10s
+	PollInterval time.Duration
+	// MaxWaitDuration defines max amount of time Wait() is going to wait for the captcha to be solved.
+	// 0 = duration is not limited.
+	// Default: 0
+	MaxWaitDuration time.Duration
 }
 
-const endPointIn = "https://2captcha.com/in.php"
-const endPointRes = "https://2captcha.com/res.php"
-
-const DomainRecaptchaNet = "recaptcha.net"
-const DomainGoogleCom = "google.com"
-
-func New(s *resty.Client, key string) *TwoCaptcha {
-	return &TwoCaptcha{
-		s:   s,
-		key: key,
+func New(key string) *Client {
+	return &Client{
+		Key:             key,
+		Ses:             resty.New(),
+		PollInterval:    10 * time.Second,
+		MaxWaitDuration: 0,
 	}
 }
 
-type CaptchaResult struct {
-	cap    *TwoCaptcha
-	id     string
-	result string
+func (c *CaptchaResponse) Report(ctx context.Context, good bool) (e error) {
+	var action = utils.If(good, "reportgood", "reportbad")
+	var req = &ActionRequest{Action: action, Id: c.Id}
+	_, e = c.c.Execute(ctx, req, endpointRes)
+	return
 }
 
-func (cr *CaptchaResult) Result() string {
-	return cr.result
-}
-
-func (cr *CaptchaResult) ReportGood() {
-	_, _ = cr.cap.s.R().SetQueryParams(map[string]string{"key": cr.cap.key, "action": "reportgood", "id": cr.id}).Get(endPointRes)
-}
-
-func (cr *CaptchaResult) ReportBad() {
-	_, _ = cr.cap.s.R().SetQueryParams(map[string]string{"key": cr.cap.key, "action": "reportbad", "id": cr.id}).Get(endPointRes)
-}
-
-type epInRes struct {
-	Status    int    `json:"status"`
-	Request   string `json:"request"`
-	ErrorText string `json:"error_text"`
-}
-
-func (c *TwoCaptcha) GetBalance() (balance float64, e error) {
-	res, e := c.s.R().SetQueryParams(map[string]string{"key": c.key, "action": "getbalance", "json": "1"}).Get(endPointRes)
+func (c *Client) GetBalance(ctx context.Context) (data fixedPoint.IntScaledP6, e error) {
+	var req = &ActionRequest{Action: "getbalance"}
+	r, e := c.Execute(ctx, req, endpointRes)
 	if e == nil {
-		var resp epInRes
-		if e = json.Unmarshal(res.Body(), &resp); e == nil {
-			if resp.Status != 1 {
-				e = errors.New(fmt.Sprintf("%v: %v", resp.Request, resp.ErrorText))
-			} else {
-				balance, e = strconv.ParseFloat(resp.Request, 64)
-			}
-		}
+		data = fixedPoint.ParseIntScaledP6(r.Request)
 	}
-	return balance, errors.Wrap(e, "GetBalance")
+	return
 }
 
-func (c *TwoCaptcha) SolveRecaptchaEnterpriseV2(siteKey, pageUrl, dataS, captchaDomain string, proxy *utils.ProxyData) (cap *CaptchaResult, e error) {
-	cap = &CaptchaResult{cap: c}
-	var m = map[string]string{"key": c.key, "method": "userrecaptcha", "enterprise": "1", "googlekey": siteKey, "pageurl": pageUrl, "min_score": "0.9", "domain": captchaDomain, "json": "1"}
-	if len(dataS) != 0 {
-		m["stoken"] = dataS
-		m["data-s"] = dataS
-	}
-	if proxy != nil {
-		m["proxy"] = proxy.StringNoType()
-		m["proxytype"] = strings.ToUpper(proxy.ProxyType)
-		if proxy.UserAgent != "" {
-			m["userAgent"] = proxy.UserAgent
-		}
-	}
-	res, e := c.s.R().SetFormData(m).Post(endPointIn)
+func (c *Client) SolveCaptcha(ctx context.Context, request requestInterface) (response CaptchaResponse, e error) {
+	response.c = c
+	response.Response, e = c.Execute(ctx, request, endpointIn)
 	if e == nil {
-		var resp epInRes
-		if e = json.Unmarshal(res.Body(), &resp); e == nil {
-			if resp.Status != 1 {
-				e = errors.New(fmt.Sprintf("%v: %v", resp.Request, resp.ErrorText))
-			} else {
-				cap.id = resp.Request
-				e = c.WaitForResult(20*time.Second, cap)
-			}
-		}
+		response.Id = response.Request
+		response.Response, e = c.Wait(ctx, response.Id)
 	}
-
-	return cap, errors.Wrap(e, "SolveRecaptchaEnterprise")
+	return
 }
 
-func (c *TwoCaptcha) WaitForResult(timeout time.Duration, cap *CaptchaResult) (e error) {
-	for e == nil && cap.result == "" {
-		time.Sleep(timeout)
-		var res *resty.Response
-		res, e = c.s.R().SetFormData(map[string]string{"key": c.key, "action": "get", "id": cap.id, "json": "1"}).Post(endPointRes)
-		var resp epInRes
-		if e = json.Unmarshal(res.Body(), &resp); e == nil {
-			if resp.Status != 1 {
-				if resp.Request != "CAPCHA_NOT_READY" {
-					e = errors.New(fmt.Sprintf("%v: %v", resp.Request, resp.ErrorText))
+func (c *Client) Wait(ctx context.Context, id string) (response Response, e error) {
+	var startedAt = time.Now()
+	var getTimeoutError = func() error {
+		var e = &TimeoutError{
+			TimeSpent:   time.Now().Sub(startedAt),
+			TimeAllowed: c.MaxWaitDuration,
+		}
+		if c.MaxWaitDuration != 0 && e.TimeSpent > c.MaxWaitDuration {
+			return e
+		}
+		return nil
+	}
+	for e == nil {
+		if e = ctx.Err(); e != nil {
+			continue
+		}
+		if e = getTimeoutError(); e != nil {
+			continue
+		}
+
+		if e = utils.SleepWithContext(ctx, c.PollInterval); e == nil {
+			var req = &ActionRequest{Id: id, Action: "get2"}
+			if response, e = c.Execute(ctx, req, endpointRes); e == nil {
+				if response.Request != "CAPCHA_NOT_READY" {
+					break
 				}
-			} else {
-				cap.result = resp.Request
 			}
+		}
+	}
+	return
+}
+
+func (c *Client) Execute(ctx context.Context, request requestInterface, endpoint string) (response Response, e error) {
+	request.fillInDefaults()
+	request.setKey(c.Key)
+
+	r, e := c.Ses.R().SetContext(ctx).SetFormData(structToMap(request)).Post(endpoint)
+	if e == nil {
+		if e = json.Unmarshal(r.Body(), &response); e == nil {
+			e = response.GetError()
 		}
 	}
 	return

@@ -1,5 +1,9 @@
 package maps
 
+import (
+	"github.com/k773/utils"
+)
+
 func CloneAndClear[T ~map[K]V, K comparable, V any](m T) map[K]V {
 	var res = make(map[K]V, len(m))
 	for k, v := range m {
@@ -61,6 +65,14 @@ func Keys[T ~map[K]V, K comparable, V any](m T) []K {
 	for k := range m {
 		res[i] = k
 		i++
+	}
+	return res
+}
+
+func ConvertValuesToString[K comparable, V any](src map[K]V) map[K]string {
+	var res = map[K]string{}
+	for k, v := range src {
+		res[k] = utils.ToString(v)
 	}
 	return res
 }
