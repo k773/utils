@@ -64,7 +64,13 @@ func InterruptProcessPID(pid int) (e error) {
 }
 
 // SetupAttributesForInterruption should be called before cmd.Start() is called; sets up correct cmd's interruption behaviour:
-// on Windows: sets cmd.SysProcAttr.CreationFlags=syscall.CREATE_NEW_PROCESS_GROUP (so the parent won't receive CTRL_BREAK_EVENT when it is sent to the child)
+//
+// on Windows: sets cmd.SysProcAttr.CreationFlags=syscall.CREATE_NEW_PROCESS_GROUP (so the parent won't receive CTRL_C_EVENT when it is sent to the child)
+//
+//	Note: on Windows child process must set make call to SetConsoleCtrlHandler(NULL, FALSE) to be able to receive ctrl+c events.
+//	But if you only want to send a ctrl+break events, setting console handler is not required.
+//
+// on Linux: does nothing
 func SetupAttributesForInterruption(cmd *exec.Cmd) {
 	setupAttributesForInterruption(cmd)
 }

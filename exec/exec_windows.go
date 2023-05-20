@@ -6,7 +6,6 @@ import (
 )
 
 func interruptProcessPID(pid int) (e error) {
-	// Sending CTRL_BREAK_EVENT on windows (src: https://github.com/golang/go/blob/master/src/os/signal/signal_windows_test.go)
 	d, e := syscall.LoadDLL("kernel32.dll")
 	if e != nil {
 		return
@@ -15,13 +14,14 @@ func interruptProcessPID(pid int) (e error) {
 	if e != nil {
 		return
 	}
-	r, _, e := p.Call(syscall.CTRL_BREAK_EVENT, uintptr(pid))
+	r, _, e := p.Call(syscall.CTRL_C_EVENT, uintptr(pid))
 	if r == 0 {
 		return
 	}
 	return
 }
 
+// make sure that spawned process makes a call to SetConsoleCtrlHandler(NULL, FALSE)
 func setupAttributesForInterruption(cmd *exec.Cmd) {
 	if cmd.SysProcAttr == nil {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
