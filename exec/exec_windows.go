@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"errors"
 	"os/exec"
 	"syscall"
 )
@@ -16,9 +17,13 @@ func interruptProcessPID(pid int) (e error) {
 	}
 	r, _, e := p.Call(syscall.CTRL_C_EVENT, uintptr(pid))
 	if r == 0 {
-		return
+		if e == nil {
+			return errors.New("sending CTRL_C_EVENT: " + e.Error())
+		} else {
+			return errors.New("sending CTRL_C_EVENT: unknown error")
+		}
 	}
-	return
+	return nil
 }
 
 // make sure that spawned process makes a call to SetConsoleCtrlHandler(NULL, FALSE)
