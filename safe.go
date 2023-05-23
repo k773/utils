@@ -2,12 +2,14 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"golang.org/x/exp/maps"
 	"math/rand"
 	"sync"
+	"time"
 )
 
 type LockerRW interface {
@@ -654,4 +656,22 @@ func (u *Safe[T]) TryRLock() bool {
 		return u.TryRLockF()
 	}
 	return true
+}
+
+/*
+	TryLock with context
+*/
+
+func TryLock[T interface{ TryLock() bool }](ctx context.Context, locker T, pollInterval time.Duration) (e error) {
+	var ticker = time.NewTicker(pollInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		if e = ctx.Err(); e != nil {
+			break
+		}
+		if locker.TryLock() {
+			break
+		}
+	}
+	return
 }

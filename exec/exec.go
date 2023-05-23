@@ -58,7 +58,7 @@ func InterruptProcess(cmd *exec.Cmd) error {
 
 // InterruptProcessPID sends different signals depending on the os:
 // on Linux: sends SIGINT
-// on Windows: sends CTRL_BREAK_EVENT, child process needs to be started with syscall.CREATE_NEW_PROCESS_GROUP, otherwise parent will receive this event too
+// on Windows: sends CTRL_С_EVENT, child process needs to be started with syscall.CREATE_NEW_PROCESS_GROUP, otherwise parent will receive this event too
 func InterruptProcessPID(pid int) (e error) {
 	return interruptProcessPID(pid)
 }
