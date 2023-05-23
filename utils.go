@@ -18,6 +18,7 @@ import (
 	"golang.org/x/net/proxy"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -1445,6 +1446,25 @@ func RestySetContext(ctx context.Context, ses *resty.Client) *resty.Client {
 		request.SetContext(ctx)
 		return nil
 	})
+}
+
+func ApplyCookies(jar http.CookieJar, cookies []*http.Cookie) {
+	if jar == nil {
+		return
+	}
+	for _, c := range cookies {
+		// building url from the domain
+		var u = &url.URL{Scheme: "https", Host: If(c.Domain[0] == '.', c.Domain[1:], c.Domain)}
+
+		jar.SetCookies(u, []*http.Cookie{{
+			Domain:   c.Domain,
+			HttpOnly: c.HttpOnly,
+			Name:     c.Name,
+			Path:     c.Path,
+			Secure:   c.Secure,
+			Value:    c.Value,
+		}})
+	}
 }
 
 // ParseAuthorizationUrl parses the url in the following format: scheme://login:password@host
