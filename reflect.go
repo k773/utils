@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"unsafe"
 )
 
 func StructMapTagValueToFieldValue(src any, tagName string, includeWithoutTag, includeEmptyTag bool) (m map[string]any) {
@@ -48,4 +49,12 @@ func ReflectDereference(src any) (v reflect.Value) {
 		return ReflectDereference(val.Elem())
 	}
 	return val
+}
+
+// ReflectGetFieldByName retrieves even private fields from the provided structure.
+// You can then use Interface() on them.
+func ReflectGetFieldByName[T any](from *T, fieldName string) reflect.Value {
+	value := reflect.ValueOf(from).Elem().FieldByName(fieldName)
+	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
+	return value
 }
