@@ -78,11 +78,20 @@ type State struct {
 	Form string `json:"form"`
 }
 
-func (p *Provider) ApiGetStates(ctx context.Context, showOnlyCode bool, tzId int) (resp GetStatesResponse, e error) {
-	resp, e = ApiRequest[GetStatesResponse](ctx, p.Ses.R().
-		SetQueryParam("tzid", strconv.Itoa(tzId)).
+func (p *Provider) ApiGetStates(ctx context.Context, showOnlyCode bool) (resp GetStatesResponse, e error) {
+	return p.ApiGetStatesWithTzId(ctx, showOnlyCode, 0)
+}
+
+// ApiGetStatesWithTzId
+// pass tzid <= 0 to not send the parameter
+func (p *Provider) ApiGetStatesWithTzId(ctx context.Context, showOnlyCode bool, tzId int) (resp GetStatesResponse, e error) {
+	request := p.Ses.R().
 		SetQueryParam("msg_list", "0").
-		SetQueryParam("message_to_code", utils.If(showOnlyCode, "1", "0")), "getState.php", nil)
+		SetQueryParam("message_to_code", utils.If(showOnlyCode, "1", "0"))
+	if tzId > 0 {
+		request.SetQueryParam("tzid", strconv.Itoa(tzId))
+	}
+	resp, e = ApiRequest[GetStatesResponse](ctx, request, "getState.php", nil)
 	if e == nil {
 		for _, state := range resp {
 			if state.Time != 0 {
@@ -119,6 +128,21 @@ type GetPhoneResponse struct {
 // service - service, usually just a plain service name - google, vkcom, ... (see all here: https://onlinesim.io/api/getNumbersStats.php)
 func (p *Provider) ApiGetPhone(ctx context.Context, country int, service string) (resp GetPhoneResponse, e error) {
 	resp, e = ApiRequest[GetPhoneResponse](ctx, p.Ses.R().SetQueryParam("country", strconv.Itoa(country)).SetQueryParam("service", service), "getNum.php", []string{"1"})
+	return
+}
+
+/*
+	Cancel activation
+*/
+
+type SetOperationOkResponse struct {
+	Response StringResponse `json:"response"`
+	// Tzid is the activation id
+	Tzid int `json:"tzid"`
+}
+
+func (p *Provider) SetOperationOk(ctx context.Context, tzid int) (resp SetOperationOkResponse, e error) {
+	resp, e = ApiRequest[SetOperationOkResponse](ctx, p.Ses.R().SetQueryParam("tzid", strconv.Itoa(tzid)), "setOperationOk.php", []string{"1"})
 	return
 }
 
