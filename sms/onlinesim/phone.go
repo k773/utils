@@ -73,7 +73,7 @@ func (p *Activation) BusyStatePolling(ctx context.Context, do func(*State) (next
 // GetState tries to find a state with this activation's tzid
 func (p *Activation) GetState(ctx context.Context) (state *State, e error) {
 	var states GetStatesResponse
-	if states, e = p.api.ApiGetStates(ctx, true, p.GetPhoneResponse.Tzid); e != nil {
+	if states, e = p.api.ApiGetStatesWithTzId(ctx, true, p.GetPhoneResponse.Tzid); e != nil {
 		return
 	}
 	if state = states.ByTzid(p.GetPhoneResponse.Tzid); state == nil {
