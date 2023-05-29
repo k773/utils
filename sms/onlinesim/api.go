@@ -141,7 +141,7 @@ type SetOperationOkResponse struct {
 	Tzid int `json:"tzid"`
 }
 
-func (p *Provider) SetOperationOk(ctx context.Context, tzid int) (resp SetOperationOkResponse, e error) {
+func (p *Provider) ApiSetOperationOk(ctx context.Context, tzid int) (resp SetOperationOkResponse, e error) {
 	resp, e = ApiRequest[SetOperationOkResponse](ctx, p.Ses.R().SetQueryParam("tzid", strconv.Itoa(tzid)), "setOperationOk.php", []string{"1"})
 	return
 }
