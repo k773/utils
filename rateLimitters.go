@@ -143,7 +143,7 @@ func (r *RateLimiterV4) Wait(sinceLastRelease time.Duration) {
 }
 
 /*
-	Rate limiter v5: RateLimiterV4 with context support
+	Rate limiter v5: RateLimiterV4 with context && throttling support
 */
 
 type RateLimiterV5 struct {
@@ -154,6 +154,10 @@ type RateLimiterV5 struct {
 
 func NewRateLimiterV5() *RateLimiterV5 {
 	return new(RateLimiterV5)
+}
+
+func (r *RateLimiterV5) Throttle(duration time.Duration) {
+	r.lastRequest = time.Now().Add(duration)
 }
 
 func (r *RateLimiterV5) Wait(ctx context.Context, sinceLastRelease time.Duration) (e error) {
