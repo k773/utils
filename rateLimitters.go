@@ -157,6 +157,9 @@ func NewRateLimiterV5() *RateLimiterV5 {
 }
 
 func (r *RateLimiterV5) Throttle(duration time.Duration) {
+	r.l.Lock()
+	defer r.l.Unlock()
+
 	r.lastRequest = time.Now().Add(duration)
 }
 
@@ -164,11 +167,13 @@ func (r *RateLimiterV5) Wait(ctx context.Context, sinceLastRelease time.Duration
 	r.l.Lock()
 	defer r.l.Unlock()
 
-	var t0 = time.Now()
-	var td = sinceLastRelease - Clamp(t0.Sub(r.lastRequest), 0, sinceLastRelease)
 	if !r.lastRequest.IsZero() {
-		e = SleepWithContext(ctx, td)
+		var sleepFor = sinceLastRelease - Clamp(Abs(time.Now().Sub(r.lastRequest)), 0, sinceLastRelease)
+		e = SleepWithContext(ctx, sleepFor)
 	}
-	r.lastRequest = t0.Add(td)
+
+	if e == nil {
+		r.lastRequest = time.Now()
+	}
 	return
 }

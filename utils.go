@@ -41,19 +41,19 @@ const UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 const serverAddr = "http://127.0.0.1:8973"
 
 type Ints interface {
-	int | int8 | int16 | int32 | int64
+	~int | ~int8 | ~int16 | ~int32 | ~int64
 }
 
 type Floats interface {
-	float32 | float64
+	~float32 | ~float64
 }
 
 type Uints interface {
-	uint | uint8 | uint16 | uint32 | uint64
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
 type complexes interface {
-	complex64 | complex128
+	~complex64 | ~complex128
 }
 
 type ScUtils struct {
