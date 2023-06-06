@@ -149,7 +149,8 @@ func (r *RateLimiterV4) Wait(sinceLastRelease time.Duration) {
 type RateLimiterV5 struct {
 	l sync.Mutex
 
-	lastRequest time.Time
+	lastRequest    time.Time
+	throttledUntil time.Time
 }
 
 func NewRateLimiterV5() *RateLimiterV5 {
@@ -160,16 +161,26 @@ func (r *RateLimiterV5) Throttle(duration time.Duration) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
-	r.lastRequest = time.Now().Add(duration)
+	r.throttledUntil = time.Now().Add(duration)
 }
 
 func (r *RateLimiterV5) Wait(ctx context.Context, sinceLastRelease time.Duration) (e error) {
 	r.l.Lock()
 	defer r.l.Unlock()
 
-	if !r.lastRequest.IsZero() {
-		var sleepFor = sinceLastRelease - Clamp(Abs(time.Now().Sub(r.lastRequest)), 0, sinceLastRelease)
-		e = SleepWithContext(ctx, sleepFor)
+	if !r.throttledUntil.IsZero() {
+		var sleepFor = r.throttledUntil.Sub(time.Now())
+		if sleepFor > 0 {
+			e = SleepWithContext(ctx, sleepFor)
+		}
+	}
+	if e == nil {
+		r.throttledUntil = time.Time{}
+
+		if !r.lastRequest.IsZero() {
+			var sleepFor = sinceLastRelease - Clamp(time.Now().Sub(r.lastRequest), 0, sinceLastRelease)
+			e = SleepWithContext(ctx, sleepFor)
+		}
 	}
 
 	if e == nil {
