@@ -15,7 +15,7 @@ import (
 // In the case second format was used, returned proto would be empty.
 func ParseProxy(str string) (proto, login, password, host string, port int, e error) {
 	var schemeSepIndex = strings.Index(str, "://")
-	if schemeSepIndex != 0 {
+	if schemeSepIndex >= 0 {
 		proto = str[:schemeSepIndex]
 		var spl = strings.Split(str[schemeSepIndex+3:], "@")
 		if len(spl) == 1 {
