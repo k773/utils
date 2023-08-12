@@ -50,7 +50,7 @@ type ProxyRequest struct {
 	UserAgent string `json:"userAgent"`
 	// Proxy must have the following format: login:password@123.123.123.123:3128
 	Proxy     string `json:"proxy"`
-	ProxyType string `json:"proxy_type"`
+	ProxyType string `json:"proxytype"`
 }
 
 func (r *ProxyRequest) fillInDefaults() {
