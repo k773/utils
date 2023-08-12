@@ -76,6 +76,7 @@ type FuncaptchaRequest struct {
 
 	PublicKey string `json:"publickey"`
 	PageUrl   string `json:"pageurl"`
+	DataBlob  string `json:"data[blob],omitempty"`
 }
 
 func (f *FuncaptchaRequest) fillInDefaults() {
