@@ -351,6 +351,7 @@ func (a *AntiCaptcha) SolveFunCaptcha(ctx context.Context, sitePublicKey, siteUr
 				Type:             taskType,
 				WebsiteURL:       siteUrl,
 				WebsitePublicKey: sitePublicKey,
+				Data:             data,
 
 				ProxyType:     proxy.ProxyType,
 				ProxyAddress:  proxy.ProxyAddress,
