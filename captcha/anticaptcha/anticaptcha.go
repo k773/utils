@@ -57,6 +57,7 @@ type antiCaptchaTaskRequest struct {
 	WebsitePublicKey string `json:"websitePublicKey,omitempty"`
 
 	EnterprisePayload *antiCaptchaEnterprisePayload `json:"enterprisePayload,omitempty"`
+	Data              string                        `json:"data,omitempty"`
 
 	Body      string `json:"body,omitempty"`
 	Phrase    bool   `json:"phrase,omitempty"`
@@ -336,7 +337,7 @@ func (a *AntiCaptcha) SolveImageCaptcha(ctx context.Context, img []byte) (antiCa
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
 }
 
-func (a *AntiCaptcha) SolveFunCaptcha(ctx context.Context, sitePublicKey, siteUrl string, proxy *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveFunCaptcha(ctx context.Context, sitePublicKey, siteUrl, data string, proxy *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
 	var taskType = antiCaptchaTypeFunCaptcha
 	if proxy == nil {
 		taskType = antiCaptchaTypeFunCaptchaProxyless
