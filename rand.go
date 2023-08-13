@@ -19,6 +19,14 @@ func RandStringMust(reader io.Reader, length int) (res string) {
 	return res
 }
 
+func RandomChoiceMust[T any](reader io.Reader, data []T) T {
+	v, e := RandomChoice(reader, data)
+	if e != nil {
+		panic(e)
+	}
+	return v
+}
+
 // RandString generates random string of characters [0-9a-Z]
 func RandString(reader io.Reader, length int) (res string, e error) {
 	// 10 + 26 + 26 = 62
