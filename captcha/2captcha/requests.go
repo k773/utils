@@ -143,7 +143,10 @@ const (
 type BoolInt bool
 
 func (b *BoolInt) String() string {
-	return "1"
+	if *b {
+		return "1"
+	}
+	return "0"
 }
 
 func (b *BoolInt) MarshalJSON() ([]byte, error) {
