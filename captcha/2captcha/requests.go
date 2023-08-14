@@ -96,7 +96,7 @@ type RecaptchaRequest struct {
 
 	Enterprise BoolInt                `json:"enterprise"`
 	GoogleKey  string                 `json:"googlekey"`
-	PageUrl    string                 `json:"page_url"`
+	PageUrl    string                 `json:"pageurl"`
 	Domain     string                 `json:"domain"` // Domain used to load the captcha
 	Invisible  BoolInt                `json:"invisible"`
 	DataS      string                 `json:"data-s"`
