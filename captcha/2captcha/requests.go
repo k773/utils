@@ -99,7 +99,7 @@ type RecaptchaRequest struct {
 	PageUrl    string                 `json:"pageurl"`
 	Domain     string                 `json:"domain"` // Domain used to load the captcha
 	Invisible  BoolInt                `json:"invisible"`
-	DataS      string                 `json:"data-s"`
+	DataS      string                 `json:"stoken"`
 	MinScore   fixedPoint.IntScaledP6 `json:"min_score"`
 }
 
