@@ -17,7 +17,7 @@ type Task interface {
 // TaskType - taskType
 type TaskType string
 
-type taskType struct {
+type TaskTypeW struct {
 	Type TaskType `json:"type"`
 }
 
@@ -28,8 +28,8 @@ type EnterprisePayload struct {
 // Cookies - cookies
 type Cookies []Cookie
 
-type cookies struct {
-	Cookies Cookies `json:"cookies"`
+type CookiesW struct {
+	Cookies Cookies `json:"CookiesW"`
 }
 
 type Cookie struct {
@@ -37,8 +37,8 @@ type Cookie struct {
 	Value string `json:"value"`
 }
 
-// taskProxy
-type taskProxy struct {
+// TaskProxyW - task proxy
+type TaskProxyW struct {
 	Proxy string `json:"proxy,omitempty"` // socks5:ip:port:user:pass
 }
 
@@ -47,9 +47,9 @@ type taskProxy struct {
 */
 
 type ReCaptchaV2Task struct {
-	taskType
-	taskProxy
-	cookies
+	TaskTypeW
+	TaskProxyW
+	CookiesW
 	WebsiteURL        string            `json:"websiteURL"`
 	WebsiteKey        string            `json:"websiteKey"`
 	EnterprisePayload EnterprisePayload `json:"enterprisePayload,omitempty"`
@@ -74,8 +74,8 @@ const (
 */
 
 type FunCaptchaTask struct {
-	taskType
-	taskProxy
+	TaskTypeW
+	TaskProxyW
 	WebsiteURL               string `json:"websiteURL"`
 	WebsitePublicKey         string `json:"websitePublicKey"`
 	FuncaptchaApiJSSubdomain string `json:"funcaptchaApiJSSubdomain,omitempty"`
