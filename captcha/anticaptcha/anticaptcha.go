@@ -229,7 +229,7 @@ func (a *AntiCaptcha) SolveRecaptchaV2(ctx context.Context, websiteKey, websiteU
 	return antiCaptchaResponse, errors.Wrap(e, "SolveRecaptchaV2")
 }
 
-func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey, websiteUrl, s string, proxyData *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
+func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey, websiteUrl, s, apiDomain string, proxyData *utils.ProxyData) (antiCaptchaResponse types.CaptchaResult, e error) {
 	var taskType = antiCaptchaTypeRecaptchaV2EnterpriseProxy
 	if proxyData == nil {
 		taskType = antiCaptchaTypeRecaptchaV2EnterpriseProxyless
@@ -249,6 +249,7 @@ func (a *AntiCaptcha) SolveRecaptchaEnterpriseV2(ctx context.Context, websiteKey
 				Type:              taskType,
 				WebsiteURL:        websiteUrl,
 				WebsiteKey:        websiteKey,
+				ApiDomain:         apiDomain,
 				EnterprisePayload: epl,
 				ProxyType:         proxyData.ProxyType,
 				ProxyAddress:      proxyData.ProxyAddress,
