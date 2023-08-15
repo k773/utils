@@ -74,6 +74,7 @@ func ToString(v any) string {
 	if !reflV.CanAddr() && !canInterfaceToString(reflV) {
 		var newReflV = reflect.New(reflV.Type())
 		if canInterfaceToString(newReflV) {
+			newReflV.Elem().Set(reflV)
 			reflV = newReflV
 		}
 	}
