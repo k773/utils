@@ -51,9 +51,9 @@ func (p *Provider) wait(ctx context.Context, taskId string) (solution Solution, 
 }
 
 func (p *Provider) makeRequest(ctx context.Context, path string, baseTask BaseTask) (res CapSolverResponse, e error) {
-	baseTask.ClientKey = p.apiKey
+	baseTask.ClientKey = p.ApiKey
 
-	r, e := p.s.R().
+	r, e := p.S.R().
 		SetContext(ctx).
 		SetBody(baseTask).
 		Post(apiEndpoint + path)
