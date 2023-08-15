@@ -18,7 +18,7 @@ func (p *Provider) BalanceUsd(ctx context.Context) (balance fixedPoint.IntScaled
 	return res.Balance, nil
 }
 
-func (p *Provider) Solve(ctx context.Context, task Task) (solution Solution, e error) {
+func (p *Provider) Solve(ctx context.Context, task any) (solution Solution, e error) {
 	res, e := p.makeRequest(ctx, "/createTask", BaseTask{Task: &task})
 	if e != nil {
 		return

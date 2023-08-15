@@ -3,11 +3,7 @@ package capsolvercom
 type BaseTask struct {
 	ClientKey string `json:"clientKey"`
 	TaskId    string `json:"taskId,omitempty"`
-	Task      *Task  `json:"task,omitempty"`
-}
-
-type Task interface {
-	fillDefaults()
+	Task      *any   `json:"task,omitempty"`
 }
 
 /*
@@ -17,10 +13,6 @@ type Task interface {
 // TaskType - taskType
 type TaskType string
 
-type TaskTypeW struct {
-	Type TaskType `json:"type"`
-}
-
 type EnterprisePayload struct {
 	S string `json:"s"`
 }
@@ -28,18 +20,9 @@ type EnterprisePayload struct {
 // Cookies - cookies
 type Cookies []Cookie
 
-type CookiesW struct {
-	Cookies Cookies `json:"CookiesW"`
-}
-
 type Cookie struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
-}
-
-// TaskProxyW - task proxy
-type TaskProxyW struct {
-	Proxy string `json:"proxy,omitempty"` // socks5:ip:port:user:pass
 }
 
 /*
@@ -47,9 +30,10 @@ type TaskProxyW struct {
 */
 
 type ReCaptchaV2Task struct {
-	TaskTypeW
-	TaskProxyW
-	CookiesW
+	Type    TaskType `json:"type"`
+	Proxy   string   `json:"proxy,omitempty"` // socks5:ip:port:user:pass
+	Cookies Cookies  `json:"CookiesW"`
+
 	WebsiteURL        string            `json:"websiteURL"`
 	WebsiteKey        string            `json:"websiteKey"`
 	EnterprisePayload EnterprisePayload `json:"enterprisePayload,omitempty"`
@@ -74,8 +58,9 @@ const (
 */
 
 type FunCaptchaTask struct {
-	TaskTypeW
-	TaskProxyW
+	Type  TaskType `json:"type"`
+	Proxy string   `json:"proxy,omitempty"` // socks5:ip:port:user:pass
+
 	WebsiteURL               string `json:"websiteURL"`
 	WebsitePublicKey         string `json:"websitePublicKey"`
 	FuncaptchaApiJSSubdomain string `json:"funcaptchaApiJSSubdomain,omitempty"`
