@@ -66,3 +66,8 @@ type FunCaptchaTask struct {
 	FuncaptchaApiJSSubdomain string `json:"funcaptchaApiJSSubdomain,omitempty"`
 	Data                     string `json:"data,omitempty"`
 }
+
+// Funcaptcha Tasks
+const (
+	TaskTypeFunCaptchaTaskProxyLess TaskType = "FunCaptchaTaskProxyLess"
+)
