@@ -1,36 +1,23 @@
 package proxyDialer
 
 import (
-	"context"
+	"errors"
 	"golang.org/x/net/proxy"
 	"net"
 	"net/url"
-	"time"
 )
 
-type Dialer struct {
-	d *net.Dialer
-
-	ctx     context.Context
-	timeout time.Duration
-}
-
-func (d *Dialer) Dial(network, addr string) (c net.Conn, err error) {
-	return d.d.DialContext(d.ctx, network, addr)
-}
-
-func New(ctx context.Context, timeout time.Duration, proxyString string) (proxyDialer proxy.Dialer, e error) {
-	var nextDialer = &Dialer{
-		d: &net.Dialer{
-			Timeout: timeout,
-		},
-		ctx:     ctx,
-		timeout: timeout,
-	}
-
+func New(proxyString string) (proxyDialer proxy.ContextDialer, e error) {
 	u, e := url.Parse(proxyString)
 	if e == nil {
-		proxyDialer, e = proxy.FromURL(u, nextDialer)
+		var proxyDialerWithoutContext proxy.Dialer
+		proxyDialerWithoutContext, e = proxy.FromURL(u, &net.Dialer{})
+		if e == nil {
+			var ok bool
+			if proxyDialer, ok = proxyDialerWithoutContext.(proxy.ContextDialer); !ok {
+				e = errors.New("dialer is not assignable to proxy.DialerContext")
+			}
+		}
 	}
 	return
 }
