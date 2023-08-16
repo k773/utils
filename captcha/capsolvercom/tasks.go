@@ -48,9 +48,9 @@ type ReCaptchaV2Task struct {
 // Recaptcha v2 tasks
 const (
 	TaskTypeReCaptchaV2Task                    TaskType = "ReCaptchaV2Task"
-	TaskTypeReCaptchaV2EnterpriseTask          TaskType = "TaskTypeReCaptchaV2EnterpriseTask"
-	TaskTypeReCaptchaV2TaskProxyLess           TaskType = "TaskTypeReCaptchaV2TaskProxyLess"
-	TaskTypeReCaptchaV2EnterpriseTaskProxyLess TaskType = "TaskTypeReCaptchaV2EnterpriseTaskProxyLess"
+	TaskTypeReCaptchaV2EnterpriseTask          TaskType = "ReCaptchaV2EnterpriseTask"
+	TaskTypeReCaptchaV2TaskProxyLess           TaskType = "ReCaptchaV2TaskProxyLess"
+	TaskTypeReCaptchaV2EnterpriseTaskProxyLess TaskType = "ReCaptchaV2EnterpriseTaskProxyLess"
 )
 
 /*
