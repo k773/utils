@@ -11,6 +11,30 @@ import (
 	"unsafe"
 )
 
+func MustRandomPassword(reader io.Reader, length int) string {
+	v, e := RandomPassword(reader, length)
+	if e != nil {
+		panic(e)
+	}
+	return v
+}
+
+func RandomPassword(reader io.Reader, length int) (string, error) {
+	var sources = [][]rune{Numbers, LettersLowercase, LettersUppercase, SpecialChars}
+	var res = make([]rune, length)
+	for i := 0; i < length; i++ {
+		source, e := RandomChoice(reader, sources)
+		if e != nil {
+			return "", e
+		}
+		res[i], e = RandomChoice(reader, source)
+		if e != nil {
+			return "", e
+		}
+	}
+	return string(res), nil
+}
+
 func RandStringMust(reader io.Reader, length int) (res string) {
 	res, e := RandString(reader, length)
 	if e != nil {
