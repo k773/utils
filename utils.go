@@ -1586,3 +1586,11 @@ func SliceIterator[T any](arr []T) func() T {
 		return v
 	}
 }
+
+func Must[T any](f func() (T, error)) T {
+	v, e := f()
+	if e != nil {
+		panic(e)
+	}
+	return v
+}
