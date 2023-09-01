@@ -11,16 +11,11 @@ import (
 	"unsafe"
 )
 
-func MustRandomPassword(reader io.Reader, length int) string {
-	v, e := RandomPassword(reader, length)
-	if e != nil {
-		panic(e)
-	}
-	return v
-}
-
-func RandomPassword(reader io.Reader, length int) (string, error) {
+func RandomPassword(reader io.Reader, length int, customCharsets ...[]rune) (string, error) {
 	var sources = [][]rune{Numbers, LettersLowercase, LettersUppercase, SpecialChars}
+	if customCharsets != nil {
+		sources = customCharsets
+	}
 	var res = make([]rune, length)
 	for i := 0; i < length; i++ {
 		source, e := RandomChoice(reader, sources)
