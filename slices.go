@@ -9,9 +9,9 @@ type SliceLengthReporterInterface interface {
 }
 
 type SliceLengthReporter[T any] struct {
-	Slice []T
+	Slice *[]T
 }
 
 func (s *SliceLengthReporter[T]) Len() int {
-	return len(s.Slice)
+	return len(*s.Slice)
 }
