@@ -1005,6 +1005,17 @@ func MapAnyKeyValue[T comparable, T2 comparable](a map[T]T2, f func(T, T2) bool)
 	return false
 }
 
+func MapSliceEasy[T any, T2 any](in []T, f func(i int, v T) (T2, bool)) []T2 {
+	var res = make([]T2, 0, len(in))
+	for i, inV := range in {
+		v, do := f(i, inV)
+		if do {
+			res = append(res, v)
+		}
+	}
+	return res
+}
+
 // MapSlice will call f() for each index of the provided slice and combine the results into a single array.
 // Return false if no value needs to be inserted.
 func MapSlice[T, resT any](in []T, f func(i int) (resT, bool)) []resT {
