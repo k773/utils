@@ -1005,6 +1005,12 @@ func MapAnyKeyValue[T comparable, T2 comparable](a map[T]T2, f func(T, T2) bool)
 	return false
 }
 
+func MapSliceEasyAll[T any, T2 any](in []T, f func(v T) T2) []T2 {
+	return MapSliceEasy[T, T2](in, func(i int, v T) (T2, bool) {
+		return f(v), true
+	})
+}
+
 func MapSliceEasy[T any, T2 any](in []T, f func(i int, v T) (T2, bool)) []T2 {
 	var res = make([]T2, 0, len(in))
 	for i, inV := range in {
