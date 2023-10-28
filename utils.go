@@ -1610,3 +1610,7 @@ func Must[T any](v T, e error) T {
 	}
 	return v
 }
+
+func IgnoreError[T any](v T, e error) T {
+	return v
+}
