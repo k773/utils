@@ -1614,3 +1614,10 @@ func Must[T any](v T, e error) T {
 func IgnoreError[T any](v T, e error) T {
 	return v
 }
+
+func RestyResponseDuration(r *resty.Response) time.Duration {
+	if r == nil {
+		return 0
+	}
+	return r.Time()
+}
