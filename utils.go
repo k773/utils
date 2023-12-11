@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -1620,4 +1621,19 @@ func RestyResponseDuration(r *resty.Response) time.Duration {
 		return 0
 	}
 	return r.Time()
+}
+
+func RestyAddPreRequestHook(ses *resty.Client, preRequestHook resty.PreRequestHook) {
+	reflectClient := reflect.ValueOf(ses)
+	hookValue := reflectClient.Elem().FieldByName("preReqHook")
+	ses.SetPreRequestHook(func(client *resty.Client, request *http.Request) error {
+		// Executing overriden hook first
+		if !hookValue.IsNil() {
+			res := hookValue.Call([]reflect.Value{reflectClient, reflect.ValueOf(request)})
+			if !res[0].IsNil() {
+				return res[0].Interface().(error)
+			}
+		}
+		return preRequestHook(client, request)
+	})
 }
