@@ -1637,3 +1637,19 @@ func RestyAddPreRequestHook(ses *resty.Client, preRequestHook resty.PreRequestHo
 		return preRequestHook(client, request)
 	})
 }
+
+func SanitizeString(in string, allowed ...[]rune) string {
+	var allowedChars = map[rune]struct{}{}
+	for _, allowedGroup := range allowed {
+		for _, allowedChar := range allowedGroup {
+			allowedChars[allowedChar] = struct{}{}
+		}
+	}
+	var sb = bytes.NewBuffer(make([]byte, 0, len(in)))
+	for _, ch := range in {
+		if _, h := allowedChars[ch]; h {
+			sb.WriteRune(ch)
+		}
+	}
+	return sb.String()
+}
