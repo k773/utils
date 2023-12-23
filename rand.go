@@ -5,11 +5,23 @@ import (
 	"errors"
 	"github.com/go-resty/resty/v2"
 	"io"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"unicode"
 	"unsafe"
 )
+
+// MathRand is the implementation of "math/rand".Reader.
+// Someone in the golang team has decided that they just know better.
+var MathRand = mathRandImpl{}
+
+type mathRandImpl struct {
+}
+
+func (m mathRandImpl) Read(dst []byte) (int, error) {
+	return rand.Read(dst)
+}
 
 func RandomPassword(reader io.Reader, length int, customCharsets ...[]rune) (string, error) {
 	var sources = [][]rune{Numbers, LettersLowercase, LettersUppercase, SpecialChars}
