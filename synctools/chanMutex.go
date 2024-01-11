@@ -1,5 +1,32 @@
 package synctools
 
+import "sync"
+
+type ChanMutexLazyInit struct {
+	s sync.Mutex
+	m *ChanMutex
+}
+
+func (c *ChanMutexLazyInit) init() {
+	if c.m != nil {
+		return
+	}
+	c.s.Lock()
+	defer c.s.Unlock()
+	if c.m == nil {
+		c.m = NewChanMutex()
+	}
+}
+
+func (c *ChanMutexLazyInit) TryLock(stop <-chan struct{}) bool {
+	c.init()
+	return c.m.TryLock(stop)
+}
+
+func (c *ChanMutexLazyInit) Unlock() {
+	c.m.Unlock()
+}
+
 type ChanMutex struct {
 	c chan struct{}
 }
