@@ -31,6 +31,11 @@ func (c *ChanMutexLazyInit) TryLock(stop <-chan struct{}) bool {
 	return c.m.TryLock(stop)
 }
 
+func (c *ChanMutexLazyInit) Lock() {
+	c.init()
+	c.m.Lock()
+}
+
 func (c *ChanMutexLazyInit) Unlock() {
 	c.m.Unlock()
 }
@@ -44,6 +49,9 @@ func NewChanMutex() *ChanMutex {
 }
 
 func (c *ChanMutex) TryLockCtx(ctx context.Context) error {
+	if e := ctx.Err(); e != nil {
+		return e
+	}
 	if c.TryLock(ctx.Done()) {
 		return nil
 	}
@@ -57,6 +65,10 @@ func (c *ChanMutex) TryLock(stop <-chan struct{}) bool {
 	case <-stop:
 		return false
 	}
+}
+
+func (c *ChanMutex) Lock() {
+	c.c <- struct{}{}
 }
 
 func (c *ChanMutex) Unlock() {
