@@ -1,6 +1,9 @@
 package synctools
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 type ChanMutexLazyInit struct {
 	s sync.Mutex
@@ -18,6 +21,11 @@ func (c *ChanMutexLazyInit) init() {
 	}
 }
 
+func (c *ChanMutexLazyInit) TryLockCtx(ctx context.Context) error {
+	c.init()
+	return c.m.TryLockCtx(ctx)
+}
+
 func (c *ChanMutexLazyInit) TryLock(stop <-chan struct{}) bool {
 	c.init()
 	return c.m.TryLock(stop)
@@ -33,6 +41,13 @@ type ChanMutex struct {
 
 func NewChanMutex() *ChanMutex {
 	return &ChanMutex{c: make(chan struct{}, 1)}
+}
+
+func (c *ChanMutex) TryLockCtx(ctx context.Context) error {
+	if c.TryLock(ctx.Done()) {
+		return nil
+	}
+	return ctx.Err()
 }
 
 func (c *ChanMutex) TryLock(stop <-chan struct{}) bool {
