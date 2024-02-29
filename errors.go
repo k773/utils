@@ -19,14 +19,14 @@ func NewTemporaryError(s string) *TemporaryError {
 }
 
 type ComparableTextError struct {
-	text string
+	Text string
 }
 
 func (c *ComparableTextError) Is(err error) bool {
 	var cast *ComparableTextError
-	return errors.As(err, &cast) && cast.text == c.text
+	return errors.As(err, &cast) && cast.Text == c.Text
 }
 
 func (c *ComparableTextError) Error() string {
-	return c.text
+	return c.Text
 }
