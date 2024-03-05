@@ -1,6 +1,13 @@
 package utils
 
-import "errors"
+import (
+	"encoding/gob"
+	"errors"
+)
+
+func init() {
+	gob.Register(&ComparableTextError{})
+}
 
 type TemporaryError struct {
 	msg string

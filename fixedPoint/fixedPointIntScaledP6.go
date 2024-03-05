@@ -12,6 +12,7 @@ import (
 	"unsafe"
 )
 
+//go:generate msgp
 type IntScaledP6 int64
 
 // Constants
