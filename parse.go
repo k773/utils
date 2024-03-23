@@ -20,7 +20,8 @@ func ParseProxy(str string) (proto, login, password, host string, port int, e er
 		var spl = strings.Split(str[schemeSepIndex+3:], "@")
 		if len(spl) == 1 {
 			var credentials = strings.Split(spl[0], ":")
-			login, password = credentials[0], credentials[1]
+			host = credentials[0]
+			port, e = strconv.Atoi(credentials[1])
 		} else if len(spl) == 2 {
 			var credentials = strings.Split(spl[0], ":")
 			var address = strings.Split(spl[1], ":")

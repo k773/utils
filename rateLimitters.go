@@ -188,3 +188,21 @@ func (r *RateLimiterV5) Wait(ctx context.Context, sinceLastRelease time.Duration
 	}
 	return
 }
+
+// RateLimiterV6 is the wrapper over RateLimiterV5 with statically defined rate limit.
+type RateLimiterV6 struct {
+	v5        *RateLimiterV5
+	rateLimit time.Duration
+}
+
+func NewRateLimiterV6(rateLimit time.Duration) *RateLimiterV6 {
+	return &RateLimiterV6{v5: NewRateLimiterV5(), rateLimit: rateLimit}
+}
+
+func (r *RateLimiterV6) Throttle(duration time.Duration) {
+	r.v5.Throttle(duration)
+}
+
+func (r *RateLimiterV6) Wait(ctx context.Context) (e error) {
+	return r.v5.Wait(ctx, r.rateLimit)
+}
