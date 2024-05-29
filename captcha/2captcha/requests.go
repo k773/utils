@@ -94,13 +94,13 @@ type RecaptchaRequest struct {
 	CommonCaptchaRequest
 	ProxyRequest
 
-	Enterprise BoolInt                `json:"enterprise"`
-	GoogleKey  string                 `json:"googlekey"`
-	PageUrl    string                 `json:"pageurl"`
-	Domain     string                 `json:"domain"` // Domain used to load the captcha
-	Invisible  BoolInt                `json:"invisible"`
-	DataS      string                 `json:"stoken"`
-	MinScore   fixedPoint.IntScaledP6 `json:"min_score"`
+	Enterprise BoolInt       `json:"enterprise"`
+	GoogleKey  string        `json:"googlekey"`
+	PageUrl    string        `json:"pageurl"`
+	Domain     string        `json:"domain"` // Domain used to load the captcha
+	Invisible  BoolInt       `json:"invisible"`
+	DataS      string        `json:"stoken"`
+	MinScore   fixedPoint.FP `json:"min_score"`
 }
 
 func (r *RecaptchaRequest) fillInDefaults() {

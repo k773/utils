@@ -32,10 +32,10 @@ func New(key string) *Provider {
 
 type GetBalanceResponse struct {
 	// Balance: currency - usd.
-	Balance fixedPoint.IntScaledP6 `json:"balance"`
+	Balance fixedPoint.FP `json:"balance"`
 	// ZBalance is the frozen amount of funds.
 	// ZBalance: currency - usd.
-	ZBalance fixedPoint.IntScaledP6 `json:"zbalance"`
+	ZBalance fixedPoint.FP `json:"zbalance"`
 }
 
 func (p *Provider) ApiGetBalance(ctx context.Context) (resp GetBalanceResponse, e error) {
@@ -68,7 +68,7 @@ type State struct {
 	Service string `json:"service"`
 	Number  string `json:"number"`
 	// Sum represents how much the number costs
-	Sum fixedPoint.IntScaledP6 `json:"sum"`
+	Sum fixedPoint.FP `json:"sum"`
 
 	// Time is the amount of time the number after which the activation will be deactivated.
 	Time DurationSeconds `json:"time"`

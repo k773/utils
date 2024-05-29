@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/k773/utils/cookieJar/ascii"
+	"github.com/k773/utils/maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -573,4 +574,15 @@ func (j *Jar) UnmarshalJSON(data []byte) error {
 	j.entries = s.Entries
 	j.nextSeqNum = s.NextSeqNum
 	return nil
+}
+
+func (j *Jar) Clone() *Jar {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	return &Jar{
+		psList:     j.psList,
+		entries:    maps.Clone(j.entries),
+		nextSeqNum: j.nextSeqNum,
+	}
 }

@@ -131,7 +131,7 @@ type antiCaptchaErrorResponse struct {
 
 type antiCaptchaGetBalanceResult struct {
 	antiCaptchaErrorResponse
-	Balance fixedPoint.IntScaledP6 `json:"balance"`
+	Balance fixedPoint.FP `json:"balance"`
 }
 
 type antiCaptchaReportResult struct {
@@ -372,7 +372,7 @@ func (a *AntiCaptcha) SolveFunCaptcha(ctx context.Context, sitePublicKey, siteUr
 	return antiCaptchaResponse, errors.Wrap(e, "SolveImageCaptcha")
 }
 
-func (a *AntiCaptcha) GetBalance(ctx context.Context) (balance fixedPoint.IntScaledP6, e error) {
+func (a *AntiCaptcha) GetBalance(ctx context.Context) (balance fixedPoint.FP, e error) {
 	resp, e := a.s.R().SetContext(ctx).
 		SetBody(antiCaptchaRequest{ClientKey: a.Key}).
 		Post(antiCaptchaGetBalanceUrl)

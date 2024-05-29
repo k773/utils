@@ -46,11 +46,11 @@ func (c *CaptchaResponse) Report(ctx context.Context, good bool) (e error) {
 	return
 }
 
-func (c *Client) GetBalance(ctx context.Context) (data fixedPoint.IntScaledP6, e error) {
+func (c *Client) GetBalance(ctx context.Context) (data fixedPoint.FP, e error) {
 	var req = &ActionRequest{Action: "getbalance"}
 	r, e := c.Execute(ctx, req, endpointRes)
 	if e == nil {
-		data = fixedPoint.ParseIntScaledP6(r.Request)
+		data = fixedPoint.Parse(r.Request)
 	}
 	return
 }

@@ -4,41 +4,41 @@
 
 package fixedPoint
 
-import (
-	"github.com/k773/utils"
-	"strconv"
-)
-
-type Int32_32 int64
-
-func NewInt3232(decimal int32, fractional uint32, fractionalPow uint8) Int32_32 {
-	const (
-		powShift = 32 - 5
-	)
-
-	return Int32_32(decimal)<<32 | Int32_32(1<<5-1-fractionalPow)<<powShift | Int32_32(fractional)
-}
-
-func ParseFixedPointToInt3232(src string) Int32_32 {
-	a, b, c, _ := ParseFixedPointRaw(src, -1)
-	return NewInt3232(int32(a), uint32(b), uint8(c))
-}
-
-func (i Int32_32) Parts() (decimal int32, fractional uint32, fractionalPow uint8) {
-	const (
-		powShift       = 32 - 5
-		powBits        = 1<<5 - 1
-		powMask        = powBits << powShift
-		fractionalMask = ^powMask
-	)
-
-	return int32(i >> 32), uint32(i & fractionalMask), uint8(powBits - (i & powMask >> powShift))
-}
-
-func (i Int32_32) String() string {
-	decimal, fractional, fractionalPow := i.Parts()
-	return strconv.Itoa(int(decimal)) + "." + utils.AddToTheLeft(strconv.Itoa(int(fractional)), int(fractionalPow), '0')
-}
+//import (
+//	"github.com/k773/utils"
+//	"strconv"
+//)
+//
+//type Int32_32 int64
+//
+//func NewInt3232(decimal int32, fractional uint32, fractionalPow uint8) Int32_32 {
+//	const (
+//		powShift = 32 - 5
+//	)
+//
+//	return Int32_32(decimal)<<32 | Int32_32(1<<5-1-fractionalPow)<<powShift | Int32_32(fractional)
+//}
+//
+//func ParseFixedPointToInt3232(src string) Int32_32 {
+//	a, b, c, _ := ParseFixedPointRaw(src, -1)
+//	return NewInt3232(int32(a), uint32(b), uint8(c))
+//}
+//
+//func (i Int32_32) Parts() (decimal int32, fractional uint32, fractionalPow uint8) {
+//	const (
+//		powShift       = 32 - 5
+//		powBits        = 1<<5 - 1
+//		powMask        = powBits << powShift
+//		fractionalMask = ^powMask
+//	)
+//
+//	return int32(i >> 32), uint32(i & fractionalMask), uint8(powBits - (i & powMask >> powShift))
+//}
+//
+//func (i Int32_32) String() string {
+//	decimal, fractional, fractionalPow := i.Parts()
+//	return strconv.Itoa(int(decimal)) + "." + utils.AddToTheLeft(strconv.Itoa(int(fractional)), int(fractionalPow), '0')
+//}
 
 //func (i Int32_32) Add(i2 Int32_32) Int32_32 {
 //	const (

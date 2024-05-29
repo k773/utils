@@ -1,5 +1,5 @@
 /*
-	IntScaledP6 implements fixed point math with precision up to 6 decimal places after the dot
+	FP implements fixed point math with precision up to 6 decimal places after the dot
 */
 
 package fixedPoint
@@ -12,8 +12,8 @@ import (
 	"unsafe"
 )
 
-//go:generate msgp
-type IntScaledP6 int64
+type FP int64
+type IntScaledP6 = FP
 
 // Constants
 // If you want to change those, duplicate the type.
@@ -23,48 +23,78 @@ const NaN = -(1<<63 - 1) // bits set are identical to uint64(1<<64-1)
 
 // These are here to remove the unnecessary calculations
 
-// IntScaledP6ZeroPointFive = 0.5
-const IntScaledP6ZeroPointFive = 500000
+// Quick definitions:
+const (
+	Zero          FP = 0
+	ZeroPointOne  FP = 100000
+	ZeroPointFive FP = 500000
+	One           FP = 1000000
+)
 
-func ParseIntScaledP6(src string) IntScaledP6 {
+func Parse(src string) FP {
 	a, b, c, n := ParseFixedPointRaw(src, intScaledP6N)
-	return NewIntScaledP6(a, b, c, n)
+	return New(a, b, c, n)
 }
 
-func ParseIntScaledP6Bytes(src []byte) IntScaledP6 {
+// ParseBytes parses a fixed point number from a byte slice.
+// The byte slice is parsed without allocations that occur when converting to a string.
+func ParseBytes(src []byte) FP {
 	a, b, c, n := ParseFixedPointRaw(*(*string)(unsafe.Pointer(&src)), intScaledP6N)
-	return NewIntScaledP6(a, b, c, n)
+	return New(a, b, c, n)
 }
 
-// NewIntScaledP6 creates a new IntScaledP6 object; leadingZeroes - the number of leading zeroes in the fractional part
-func NewIntScaledP6(decimal, fractional, leadingZeroes uint, negative bool) IntScaledP6 {
-	var a = IntScaledP6(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-uint(utils.Log10(int(fractional)))-leadingZeroes)))))
+// New creates a new FP object.
+//
+// Arguments:
+// - decimal - the number before the dot;
+// - fractional - the number after the dot;
+// - leadingZeroes - the number of leading zeroes in the fractional part.
+// - negative - if the number is negative.
+//
+// Examples:
+// - New(2, 1, 0, false).String() = "2.1"
+// - New(2, 1, 1, false).String() = "2.01"
+// - New(2, 1, 2, false).String() = "2.001"
+func New(decimal, fractional, leadingZeroes uint, negative bool) FP {
+	var a = FP(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-uint(utils.Log10(int(fractional)))-leadingZeroes)))))
 	if !negative {
 		return a
 	}
 	return -a
 }
 
-// NewIntScaledP6MinLeading examples:
-// NewIntScaledP6MinLeading(201/100, 201%100, 2, false).String() = "2.01"
-func NewIntScaledP6MinLeading(decimal, fractional, minLeadingZeroes uint, negative bool) IntScaledP6 {
+// NewMFN creates a new FP object.
+// The number will have at least minLeadingZeroes numbers after the dot.
+//
+// Arguments:
+// - decimal - the number before the dot;
+// - fractional - the number after the dot;
+// - minFractionalNumbers - the minimum number of leading zeroes in the fractional part.
+// - negative - if the number is negative.
+//
+// Examples:
+// - NewMFN(2, 1, 2, false).String() = "2.01"
+// - NewMFN(2, 10, 2, false).String() = "2.10"
+// - NewMFN(2, 100, 2, false).String() = "2.100"
+func NewMFN(decimal, fractional, minFractionalNumbers uint, negative bool) FP {
 	var fractionalPow = uint(utils.Log10(int(fractional)))
-	if fractionalPow < minLeadingZeroes {
-		fractionalPow = minLeadingZeroes
+	if fractionalPow < minFractionalNumbers {
+		fractionalPow = minFractionalNumbers
 	}
 
-	var a = IntScaledP6(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-fractionalPow)))))
+	var a = FP(int64(decimal)*intScaledP6Scale + (int64(fractional) * int64(utils.Pow10(int(intScaledP6N-fractionalPow)))))
 	if !negative {
 		return a
 	}
 	return -a
 }
 
-func NewIntScaledP6FromFloat64(f float64) IntScaledP6 {
-	return IntScaledP6(f * float64(intScaledP6Scale))
+func NewFromFloat(f float64) FP {
+	return FP(f * float64(intScaledP6Scale))
 }
 
-func (i IntScaledP6) Float64() float64 {
+// Float64 converts the fixed point number to a float64.
+func (i FP) Float64() float64 {
 	if i.IsNaN() {
 		return math.NaN()
 	}
@@ -72,8 +102,7 @@ func (i IntScaledP6) Float64() float64 {
 	return float64(i) / intScaledP6Scale
 }
 
-// String: further optimizations are possible
-func (i IntScaledP6) String() string {
+func (i FP) String() string {
 	if i == 0 {
 		return "0"
 	}
@@ -116,19 +145,19 @@ func (i IntScaledP6) String() string {
 	Math operations
 */
 
-func (i IntScaledP6) Multiply(i2 IntScaledP6) IntScaledP6 {
+func (i FP) Multiply(i2 FP) FP {
 	var a1, b1 = i / intScaledP6Scale, i % intScaledP6Scale
 	var a2, b2 = i2 / intScaledP6Scale, i2 % intScaledP6Scale
 
 	return (a1 * b2) + (a2 * b1) + (a1*a2)*intScaledP6Scale + (b1*b2)/intScaledP6Scale
 }
 
-func (i IntScaledP6) Divide(i2 IntScaledP6) IntScaledP6 {
-	return NewIntScaledP6FromFloat64(i.Float64() / i2.Float64())
+func (i FP) Divide(i2 FP) FP {
+	return NewFromFloat(i.Float64() / i2.Float64())
 }
 
 // Floor cuts off any digits after n
-func (i IntScaledP6) Floor(n int) IntScaledP6 {
+func (i FP) Floor(n int) FP {
 	if i < 0 {
 		return -(-i).Ceil(n)
 	}
@@ -136,19 +165,19 @@ func (i IntScaledP6) Floor(n int) IntScaledP6 {
 		n = 0
 	}
 
-	return i.FloorUnsafe(n)
+	return i.FloorPositive(n)
 }
 
-// FloorUnsafe works correctly only on numbers [0, +inf)
-func (i IntScaledP6) FloorUnsafe(n int) IntScaledP6 {
-	var pow = IntScaledP6(utils.Pow10(intScaledP6N - n))
+// FloorPositive works correctly only on numbers [0, +inf)
+func (i FP) FloorPositive(n int) FP {
+	var pow = FP(utils.Pow10(intScaledP6N - n))
 	var fractional = (i % intScaledP6Scale) / pow * pow
 
 	return i/intScaledP6Scale*intScaledP6Scale + fractional
 }
 
 // Ceil rounds a number up to the next largest number
-func (i IntScaledP6) Ceil(n int) IntScaledP6 {
+func (i FP) Ceil(n int) FP {
 	if i < 0 {
 		return -(-i).Floor(n)
 	}
@@ -157,12 +186,12 @@ func (i IntScaledP6) Ceil(n int) IntScaledP6 {
 		n = 0
 	}
 
-	return i.CeilUnsafe(n)
+	return i.CeilPositive(n)
 }
 
-// CeilUnsafe works correctly only on numbers [0, +inf)
-func (i IntScaledP6) CeilUnsafe(n int) IntScaledP6 {
-	var pow = IntScaledP6(utils.Pow10(intScaledP6N - n))
+// CeilPositive works correctly only on numbers [0, +inf)
+func (i FP) CeilPositive(n int) FP {
+	var pow = FP(utils.Pow10(intScaledP6N - n))
 	var fractional = (i % intScaledP6Scale) / pow * pow
 
 	if i%pow != 0 {
@@ -171,7 +200,7 @@ func (i IntScaledP6) CeilUnsafe(n int) IntScaledP6 {
 	return i/intScaledP6Scale*intScaledP6Scale + fractional
 }
 
-func (i IntScaledP6) Abs() IntScaledP6 {
+func (i FP) Abs() FP {
 	if i < 0 {
 		return -i
 	}
@@ -182,85 +211,85 @@ func (i IntScaledP6) Abs() IntScaledP6 {
 	NaN support
 */
 
-func (i IntScaledP6) IsNaN() bool {
+func (i FP) IsNaN() bool {
 	return i == NaN
 }
 
-func ParseIntScaledP6NaN(src string) IntScaledP6 {
+func ParseIntScaledP6NaN(src string) FP {
 	if src == "null" {
 		return NaN
 	}
-	return ParseIntScaledP6(src)
+	return Parse(src)
 }
 
-func (i IntScaledP6) StringNaN() string {
+func (i FP) StringNaN() string {
 	if i.IsNaN() {
 		return "null"
 	}
 	return i.String()
 }
 
-func wrapMathWithNaN(i, i2 IntScaledP6, f func() IntScaledP6) IntScaledP6 {
+func wrapMathWithNaN(i, i2 FP, f func() FP) FP {
 	if i.IsNaN() || i2.IsNaN() {
 		return NaN
 	}
 	return f()
 }
 
-func wrapMathWithNaNSingle(i IntScaledP6, f func() IntScaledP6) IntScaledP6 {
+func wrapMathWithNaNSingle(i FP, f func() FP) FP {
 	if i.IsNaN() {
 		return NaN
 	}
 	return f()
 }
 
-func (i IntScaledP6) AddNaN(i2 IntScaledP6) IntScaledP6 {
-	return wrapMathWithNaN(i, i2, func() IntScaledP6 { return i + i2 })
+func (i FP) AddNaN(i2 FP) FP {
+	return wrapMathWithNaN(i, i2, func() FP { return i + i2 })
 }
 
-func (i IntScaledP6) SubtractNaN(i2 IntScaledP6) IntScaledP6 {
-	return wrapMathWithNaN(i, i2, func() IntScaledP6 { return i - i2 })
+func (i FP) SubtractNaN(i2 FP) FP {
+	return wrapMathWithNaN(i, i2, func() FP { return i - i2 })
 }
 
-func (i IntScaledP6) MultiplyNaN(i2 IntScaledP6) IntScaledP6 {
-	return wrapMathWithNaN(i, i2, func() IntScaledP6 { return i.Multiply(i2) })
+func (i FP) MultiplyNaN(i2 FP) FP {
+	return wrapMathWithNaN(i, i2, func() FP { return i.Multiply(i2) })
 }
 
-func (i IntScaledP6) DivideNaN(i2 IntScaledP6) IntScaledP6 {
-	return wrapMathWithNaN(i, i2, func() IntScaledP6 { return i.Divide(i2) })
+func (i FP) DivideNaN(i2 FP) FP {
+	return wrapMathWithNaN(i, i2, func() FP { return i.Divide(i2) })
 }
 
-func (i IntScaledP6) FloorNaN(n int) IntScaledP6 {
-	return wrapMathWithNaNSingle(i, func() IntScaledP6 { return i.Floor(n) })
+func (i FP) FloorNaN(n int) FP {
+	return wrapMathWithNaNSingle(i, func() FP { return i.Floor(n) })
 }
 
-func (i IntScaledP6) CeilNaN(n int) IntScaledP6 {
-	return wrapMathWithNaNSingle(i, func() IntScaledP6 { return i.Ceil(n) })
+func (i FP) CeilNaN(n int) FP {
+	return wrapMathWithNaNSingle(i, func() FP { return i.Ceil(n) })
 }
 
 /*
 	Interfaces implementations
 */
 
-func (i *IntScaledP6) UnmarshalJSON(bytes []byte) error {
-	*i = ParseIntScaledP6(string(bytes))
+func (i *FP) UnmarshalJSON(bytes []byte) error {
+	*i = Parse(string(bytes))
 	return nil
 }
 
-func (i *IntScaledP6) UnmarshalEasyJSON(in *jlexer.Lexer) {
+func (i *FP) UnmarshalEasyJSON(in *jlexer.Lexer) {
 	isTopLevel := in.IsStart()
 	var rawBytes = in.Raw()
-	*i = ParseIntScaledP6(*(*string)(unsafe.Pointer(&rawBytes)))
+	*i = Parse(*(*string)(unsafe.Pointer(&rawBytes)))
 	if isTopLevel {
 		in.Consumed()
 	}
 }
 
-func (i IntScaledP6) MarshalJSON() ([]byte, error) {
+func (i FP) MarshalJSON() ([]byte, error) {
 	return []byte(i.String()), nil
 }
 
-func (i IntScaledP6) MarshalEasyJSON(w *jwriter.Writer) {
+func (i FP) MarshalEasyJSON(w *jwriter.Writer) {
 	var a = i.String()
 	w.Raw(*(*[]byte)(unsafe.Pointer(&a)), nil)
 }

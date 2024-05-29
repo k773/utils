@@ -21,9 +21,11 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
+	"unsafe"
 
 	//"golang.org/x/sys/windows/registry"
 	"golang.org/x/text/encoding/charmap"
@@ -1651,4 +1653,101 @@ func SanitizeString(in string, allowed ...[]rune) string {
 		}
 	}
 	return sb.String()
+}
+
+func RestyResponseExtractClient(response *resty.Response) (*resty.Client, error) {
+	if response == nil {
+		return nil, errors.New("response is nil")
+	}
+	var req = response.Request
+	if req == nil {
+		return nil, errors.New("request is nil")
+	}
+	var reqValue = reflect.ValueOf(req)
+	if reqValue.Kind() != reflect.Ptr {
+		return nil, errors.New("request is not pointer")
+	}
+	clientValue := reqValue.Elem().FieldByName("client")
+	if !clientValue.IsValid() || clientValue.IsNil() {
+		return nil, errors.New("client field not valid")
+	}
+	clientValue = reflect.NewAt(clientValue.Type(), unsafe.Pointer(clientValue.UnsafeAddr())).Elem()
+	if !clientValue.CanInterface() {
+		return nil, errors.New("wtf")
+	}
+	client, ok := clientValue.Interface().(*resty.Client)
+	if !ok {
+		return nil, errors.New("client is not *resty.Client")
+	}
+	return client, nil
+}
+
+// RestyExtractProxy extracts proxy from the provided resty client.
+// If the proxy is not set, it returns (nil, nil).
+func RestyExtractProxy(client *resty.Client) (*ProxyData, error) {
+	if client == nil {
+		return nil, errors.New("client is nil")
+	}
+	var field = reflect.ValueOf(client).Elem().FieldByName("proxyURL")
+	if !field.IsValid() {
+		return nil, errors.New("proxy field not found")
+	}
+	if field.IsNil() {
+		return nil, nil
+	}
+	// Fuck reflect.
+	field = reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem()
+	if !field.CanInterface() {
+		return nil, errors.New("wtf")
+	}
+	var proxyURL, ok = field.Interface().(*url.URL)
+	if !ok {
+		return nil, errors.New("proxy field is not url.URL")
+	}
+	port, e := strconv.Atoi(proxyURL.Port())
+	if e != nil {
+		return nil, e
+	}
+	password, _ := proxyURL.User.Password()
+
+	return &ProxyData{
+		ProxyType:     proxyURL.Scheme,
+		ProxyAddress:  proxyURL.Hostname(),
+		ProxyPort:     port,
+		ProxyLogin:    proxyURL.User.Username(),
+		ProxyPassword: password,
+	}, nil
+}
+
+func RestyResponseExtractProxy(r *resty.Response) (*ProxyData, error) {
+	var client, e = RestyResponseExtractClient(r)
+	if e != nil {
+		return nil, e
+	}
+	return RestyExtractProxy(client)
+}
+
+// RestyExtractProxyS extracts proxy from the provided resty client and returns it in the following format:
+// scheme://login:password@host:port.
+// If the proxy is not set, it returns ("", nil)
+func RestyExtractProxyS(client *resty.Client) (string, error) {
+	var p, e = RestyExtractProxy(client)
+	if e != nil {
+		return "", e
+	}
+	if p == nil {
+		return "", nil
+	}
+	return p.String(), nil
+}
+
+func RestyResponseExtractProxyS(r *resty.Response) (string, error) {
+	var p, e = RestyResponseExtractProxy(r)
+	if e != nil {
+		return "", e
+	}
+	if p == nil {
+		return "", nil
+	}
+	return p.String(), nil
 }

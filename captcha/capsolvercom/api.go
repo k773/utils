@@ -10,7 +10,7 @@ import (
 
 const apiEndpoint = "https://api.capsolver.com"
 
-func (p *Provider) BalanceUsd(ctx context.Context) (balance fixedPoint.IntScaledP6, e error) {
+func (p *Provider) BalanceUsd(ctx context.Context) (balance fixedPoint.FP, e error) {
 	res, e := p.makeRequest(ctx, "/getBalance", BaseTask{})
 	if e != nil {
 		return

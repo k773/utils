@@ -314,6 +314,15 @@ func (s *SafeMapGetSetHas[K, V]) Delete(k K, externalLock bool) {
 	delete(s.M, k)
 }
 
+func (s *SafeMapGetSetHas[K, V]) GetAndDelete(k K) V {
+	s.s.Lock()
+	defer s.s.Unlock()
+
+	v := s.M[k]
+	delete(s.M, k)
+	return v
+}
+
 func (s *SafeMapGetSetHas[K, V]) Clone() map[K]V {
 	s.RLock()
 	defer s.RUnlock()

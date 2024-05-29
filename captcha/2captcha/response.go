@@ -18,8 +18,8 @@ type Response struct {
 	// Status is only set to 1 if the request's succeeded.
 	Status BoolInt `json:"status"`
 
-	Price     fixedPoint.IntScaledP6 `json:"price"`
-	ErrorText string                 `json:"error_text"`
+	Price     fixedPoint.FP `json:"price"`
+	ErrorText string        `json:"error_text"`
 	// Have no idea why it's called that way, but this field actually contains a response / error code.
 	Request string `json:"request"`
 }

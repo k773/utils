@@ -35,11 +35,11 @@ func (c *CapSolverResponseError) Error() string {
 
 type CapSolverResponse struct {
 	CapSolverResponseError
-	Status   string                 `json:"status,omitempty"`
-	Solution Solution               `json:"solution,omitempty"`
-	TaskId   string                 `json:"taskId,omitempty"`
-	Balance  fixedPoint.IntScaledP6 `json:"balance,omitempty"`
-	Packages []string               `json:"packages,omitempty"`
+	Status   string        `json:"status,omitempty"`
+	Solution Solution      `json:"solution,omitempty"`
+	TaskId   string        `json:"taskId,omitempty"`
+	Balance  fixedPoint.FP `json:"balance,omitempty"`
+	Packages []string      `json:"packages,omitempty"`
 }
 
 func (c *CapSolverResponse) isReady() bool {
